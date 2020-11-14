@@ -121,6 +121,7 @@
     <build>
         <pluginManagement>
             <plugins>
+
                 <plugin>
                     <groupId>org.apache.tomcat.maven</groupId>
                     <artifactId>tomcat7-maven-plugin</artifactId>
@@ -159,6 +160,5 @@
                 </plugin>
             </plugins>
         </pluginManagement>
-
     </build>
 </project>

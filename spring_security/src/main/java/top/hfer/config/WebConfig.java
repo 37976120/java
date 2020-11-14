@@ -1,4 +1,4 @@
-package top.hfer.springmvc.config;
+package top.hfer.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -12,12 +12,13 @@ import org.springframework.web.servlet.view.InternalResourceViewResolver;
 
 @Configuration
 @EnableWebMvc//关键注解
-@ComponentScan(basePackages = "top.hfer.springmvc", includeFilters = {@ComponentScan.Filter(type = FilterType.ANNOTATION, value = Controller.class)})
+@ComponentScan(basePackages = "top.hfer", includeFilters = {@ComponentScan.Filter(type = FilterType.ANNOTATION, value = Controller.class)})
 //只扫controller
 public class WebConfig implements WebMvcConfigurer {
+    //spring-security自带的拦截器，不再需要独立去定义了
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-        registry.addViewController("/").setViewName("/login");
+        registry.addViewController("/").setViewName("redirect:login");//让用户请求根重定向到springSecurity提供的登录“链接”
     }
 
     //视图解析器
