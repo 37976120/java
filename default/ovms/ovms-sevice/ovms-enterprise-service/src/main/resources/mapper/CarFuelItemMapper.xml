@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.CarFuelItemMapper">
+    <!--导出excel-->
+    <select id="exportExcel" resultType="com.htstar.ovms.enterprise.api.vo.CarFuelItemPageVO">
+        SELECT
+        c.lic_code,
+        u.nick_name as username,
+        card.card_no as cardNo,
+        u1.nick_name as fuelAdmin,
+        item.*
+        FROM
+        car_fuel_item item
+        LEFT JOIN car_info c ON item.car_id=c.`id`
+        LEFT JOIN sys_user u ON u.user_id=item.`user_id`
+        left join sys_user u1 on u1.user_id=item.driver_user_id
+        LEFT JOIN car_fuel_card card ON item.card_id=card.id
+        where item.`del_flag`=0 AND item.etp_id = #{query.etpId}
+        and item.item_status!=0
+        <if test="query.ids!=null and query.ids!=''">
+            and item.id IN (${query.ids})
+        </if>
+        <if test="query.startTime != null">
+            AND item.fuel_time &gt;=#{query.startTime}
+        </if>
+        <if test="query.endTime!= null">
+            AND item.fuel_time &lt;=#{query.endTime}
+        </if>
+        <if test="query.licCode != null and query.licCode !=''">
+            AND c.lic_code like concat('%',#{query.licCode},'%')
+        </if>
+        <if test="query.itemStatus != null  ">
+            AND item.item_status = #{query.itemStatus}
+        </if>
+        order by item.create_time desc
+
+    </select>
+    <!--分页查询-->
+    <select id="queryPage" resultType="com.htstar.ovms.enterprise.api.vo.CarFuelItemPageVO">
+        SELECT
+        c.lic_code,
+        u.nick_name as username,
+        card.card_no as cardNo,
+        u1.nick_name as fuelAdmin,
+        item.*
+        FROM
+        car_fuel_item item
+        LEFT JOIN car_info c ON item.car_id=c.`id`
+        LEFT JOIN sys_user u ON item.`user_id`=u.user_id
+        left join sys_user u1 on item.driver_user_id=u1.user_id
+        left join car_fuel_card card on item.card_id=card.id
+        where  item.`del_flag`=0  and item.item_status !=0
+            <if test="query.startTime != null">
+                AND item.fuel_time &gt;=#{query.startTime}
+            </if>
+            <if test="query.endTime!= null">
+                AND item.fuel_time &lt;=#{query.endTime}
+            </if>
+            <if test="query.licCode != null and query.licCode !=''">
+                AND c.lic_code like concat('%',#{query.licCode},'%')
+            </if>
+            <if test="query.itemStatus != null">
+                AND item.item_status = #{query.itemStatus}
+            </if>
+            <if test="query.etpId != null">
+                AND item.etp_id = #{query.etpId}
+            </if>
+            <if test="query.userId!=null">
+                AND (item.user_id=#{query.userId}
+            </if>
+            <if test="query.licCodes !=null ">
+                or c.lic_code in
+                <foreach item="item" collection="query.licCodes" index="index" open="(" separator=","
+                         close=")">
+                    #{item}
+                </foreach>
+                )
+            </if>
+        order by item.create_time desc
+    </select>
+    <!--获取所有加油id-->
+    <select id="getIdList" resultType="int">
+        SELECT id FROM car_fuel_item WHERE del_flag=0 AND etp_id=#{etpId}
+    </select>
+    <!--获取卡的待存档金额-->
+    <select id="getSumCostByCard" resultType="java.lang.Integer">
+      SELECT IFNULL(SUM(fuel_money),0)
+        FROM car_fuel_item
+       WHERE id=#{cardId}
+       AND del_flag=0
+       AND item_status !=2
+    </select>
+    <select id="getCarFuelItemById" resultType="com.htstar.ovms.enterprise.api.vo.CarFuelItemPageVO">
+         SELECT
+          i.*,
+          car.lic_code AS licCode,
+          u1.`nick_name` AS fuelAdmin,
+          d.card_no as cardNo,
+          u2.nick_name as username
+        FROM
+          car_fuel_item i
+          LEFT JOIN car_info car
+            ON i.`car_id` = car.id
+          LEFT JOIN sys_user u1
+            ON i.`driver_user_id` = u1.`user_id`
+          LEFT JOIN car_fuel_card d
+          on i.card_id=d.id
+          left join sys_user u2 on i.user_id=u2.user_id
+        WHERE i.`id` =#{id}
+    </select>
+    <select id="getItemByUser" resultType="com.htstar.ovms.enterprise.api.vo.CarFuelItemPageVO">
+        SELECT
+          i.*,
+          car.lic_code AS licCode,
+          u.`nick_name` AS fuelAdmin,
+          d.card_no as cardNo
+        FROM
+          car_fuel_item i
+          LEFT JOIN car_info car
+            ON i.`car_id` = car.id
+          LEFT JOIN sys_user u
+            ON i.`driver_user_id` = u.`user_id`
+          LEFT JOIN car_fuel_card d
+          on i.card_id=d.id
+        WHERE i.`user_id` =#{userid} and item_status=0;
+    </select>
+
+
+    <!--<resultMap id="carFuelItemMap" type="com.htstar.ovms.enterprise.api.entity.CarFuelItem">
+                    <id property="id" column="id"/>
+                          <result property="etpId" column="etp_id"/>
+                          <result property="carId" column="car_id"/>
+                          <result property="fuelTime" column="fuel_time"/>
+                          <result property="fuelMoney" column="fuel_money"/>
+                          <result property="fuelType" column="fuel_type"/>
+                          <result property="unitPrice" column="unit_price"/>
+                          <result property="fuelAddr" column="fuel_addr"/>
+                          <result property="instrMileage" column="instr_mileage"/>
+                          <result property="surMileage" column="sur_mileage"/>
+                          <result property="fuelAdmin" column="fuel_admin"/>
+                          <result property="createTime" column="create_time"/>
+                          <result property="updateTime" column="update_time"/>
+                          <result property="remark" column="remark"/>
+                          <result property="billAddr" column="bill_addr"/>
+                          <result property="delFlag" column="del_flag"/>
+              </resultMap>-->
+</mapper>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.report.mapper.ReportDriverExpenseMapper">
+
+    <resultMap id="reportDriverExpenseMap" type="com.htstar.ovms.report.api.entity.ReportDriverExpense">
+        <id property="driverUserId" column="driver_user_id"/>
+        <result property="monthShort" column="month_short"/>
+        <result property="etpId" column="etp_id"/>
+        <result property="fuelCost" column="fuel_cost"/>
+        <result property="etcCost" column="etc_cost"/>
+        <result property="stopCost" column="stop_cost"/>
+        <result property="washCost" column="wash_cost"/>
+        <result property="ticketCost" column="ticket_cost"/>
+        <result property="suppliesCost" column="supplies_cost"/>
+        <result property="otherCost" column="other_cost"/>
+    </resultMap>
+    <sql id="clums">
+    driver_user_id,
+    month_short,
+    etp_id,
+    fuel_cost,
+    etc_cost,
+    stop_cost,
+    wash_cost,
+    ticket_cost,
+    supplies_cost,
+    other_cost,
+  </sql>
+    <select id="getTotalCostByDriver" resultType="com.htstar.ovms.report.api.entity.ReportDriverExpense">
+        SELECT
+          IFNULL(SUM(fuel_cost), 0) AS fuel_cost,
+          IFNULL(SUM(etc_cost), 0) AS etc_cost,
+          IFNULL(SUM(stop_cost), 0) AS stop_cost,
+          IFNULL(SUM(wash_cost), 0) AS wash_cost,
+          IFNULL(SUM(ticket_cost), 0) AS ticket_cost,
+          IFNULL(SUM(supplies_cost), 0) AS supplies_cost,
+          IFNULL(SUM(other_cost), 0) AS other_cost
+        FROM
+          report_driver_expense
+        WHERE month_short like CONCAT (#{monthShort},'%')
+          AND etp_id =#{etpId}
+    </select>
+    <select id="getCostPageByDriver" resultType="com.htstar.ovms.report.api.entity.ReportDriverExpense">
+          SELECT
+          u.`nick_name` as driverName,
+          IFNULL(SUM(fuel_cost), 0) AS fuel_cost,
+          IFNULL(SUM(etc_cost), 0) AS etc_cost,
+          IFNULL(SUM(stop_cost), 0) AS stop_cost,
+          IFNULL(SUM(wash_cost), 0) AS wash_cost,
+          IFNULL(SUM(ticket_cost), 0) AS ticket_cost,
+          IFNULL(SUM(supplies_cost), 0) AS supplies_cost,
+          IFNULL(SUM(other_cost), 0) AS other_cost
+        FROM
+          report_driver_expense re
+          LEFT JOIN sys_user u ON re.`driver_user_id`=u.`user_id`
+        WHERE month_short like CONCAT (#{req.monthShort},'%')
+          AND re.etp_id =#{req.etpId}
+          GROUP BY driver_user_id
+    </select>
+</mapper>

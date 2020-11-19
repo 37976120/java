@@ -1,0 +1,9 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+    com.htstar.ovms.common.data.cache.RedisTemplateConfig,\
+    com.htstar.ovms.common.data.cache.RedisCacheManagerConfig,\
+    com.htstar.ovms.common.data.cache.RedisCacheAutoConfiguration,\
+    com.htstar.ovms.common.data.tenant.OvmsTenantConfigProperties,\
+    com.htstar.ovms.common.data.tenant.TenantContextHolderFilter,\
+    com.htstar.ovms.common.data.tenant.OvmsFeignTenantConfiguration,\
+    com.htstar.ovms.common.data.mybatis.MybatisPlusConfiguration,\
+    com.htstar.ovms.common.data.resolver.WebMvcConfig

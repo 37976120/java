@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.htstar</groupId>
+		<artifactId>ovms</artifactId>
+		<version>3.8.0</version>
+	</parent>
+
+	<artifactId>ovms-visual</artifactId>
+	<description>ovms 图形化功能模块</description>
+	<packaging>pom</packaging>
+
+	<modules>
+		<module>ovms-codegen</module>
+		<module>ovms-daemon-quartz</module>
+		<module>ovms-oa-platform</module>
+		<module>ovms-pay-platform</module>
+		<module>ovms-monitor</module>
+		<module>ovms-mp-platform</module>
+		<module>ovms-sso-client-demo</module>
+		<module>ovms-sentinel-dashboard</module>
+		<module>ovms-tx-manager</module>
+        <module>ovms-xxl-job-admin</module>
+	</modules>
+</project>

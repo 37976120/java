@@ -1,0 +1,483 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.CarInfoMapper">
+
+    <resultMap id="carInfoMap" type="com.htstar.ovms.enterprise.api.entity.CarInfo">
+        <id property="id" column="id"/>
+        <result property="licCode" column="lic_code"/>
+        <result property="frameCode" column="frame_code"/>
+        <result property="engineCode" column="engine_code"/>
+        <result property="issuedTime" column="issued_time"/>
+        <result property="registerTime" column="register_time"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="etpId" column="etp_id"/>
+        <result property="driverId" column="driver_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="licenseAddr" column="license_addr"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="userId" column="user_id"/>
+        <result property="carEmission" column="car_emission"/>
+        <result property="fuelType" column="fuel_type"/>
+        <result property="seateNum" column="seate_num"/>
+        <result property="carLevel" column="car_level"/>
+        <result property="carRole" column="car_role"/>
+        <result property="licenseCode" column="license_code"/>
+        <result property="etpName" column="etp_name"/>
+        <result property="carType" column="car_type"/>
+        <result property="deviceSn" column="device_sn"/>
+        <result property="username" column="username"/>
+        <result property="deptName" column="deptName"/>
+        <result property="typeName" column="typeName"/>
+        <result property="driverName" column="driverName"/>
+    </resultMap>
+
+    <!--车辆定位-->
+    <resultMap id="carLocationVO" type="com.htstar.ovms.enterprise.api.vo.CarLocationVO">
+        <result property="licCode" column="lic_code"/>
+        <result property="deviceSn" column="device_sn"/>
+        <result property="online" column="online"/>
+        <result property="carStatus" column="carStatus"/>
+        <result property="lat" column="lat"/>
+        <result property="lng" column="lng"/>
+        <result property="gpsTime" column="gpsTime"/>
+        <result property="etpName" column="etpName"/>
+        <result property="carSubBrand" column="car_sub_brand"/>
+    </resultMap>
+
+    <resultMap id="carDriverScheduleVO" type="com.htstar.ovms.enterprise.api.vo.ApplyCarOrderAndDriverVO">
+        <result property="carId" column="car_id"/>
+        <result property="driverId" column="driver_id"/>
+        <result property="phone" column="phone"/>
+        <result property="driverName" column="driverName"/>
+        <result property="licenseType" column="license_type"/>
+        <result property="etpName" column="etp_name"/>
+        <result property="licCode" column="lic_code"/>
+        <result property="carSubBrand" column="car_sub_brand"/>
+        <result property="seateNum" column="seate_num"/>
+        <result property="deptName" column="deptName"/>
+        <result property="carLevel" column="car_level"/>
+    </resultMap>
+    <select id="untieCarByDriverId" resultType="java.lang.Integer">
+        UPDATE car_info SET driver_id=NULL WHERE driver_id=#{driverId}
+    </select>
+
+
+    <select id="selectCarInfoPage" resultMap="carInfoMap">
+        SELECT
+        car.*,
+        etp.etp_name,
+        carDev.device_sn,
+        usr.username as username,
+        carType.car_type as typeName,
+        dept.name as deptName,
+        (select nick_name from sys_user where user_id = driver.user_id)as driverName
+        FROM
+        car_info car
+        inner JOIN etp_info etp ON car.etp_id = etp.id
+        LEFT JOIN sys_dept dept ON car.`dept_id` = dept.`dept_id`
+        LEFT JOIN car_device carDev ON carDev.car_id = car.id
+        LEFT JOIN sys_user usr ON usr.user_id = car.user_id
+        left join car_driver_info driver ON driver.id = car.driver_id
+        LEFT JOIN car_model model ON model.car_id = car.id
+        LEFT JOIN car_type carType ON carType.id= model.tpye_id
+        where car.del_flag = 0
+        <if test="query.licCode != null and query.licCode !=''">
+            and car.lic_code like concat('%',#{query.licCode},'%')
+        </if>
+        <if test="query.etpId != null">
+            and etp.id = #{query.etpId}
+        </if>
+        <if test="query.carType != null">
+            and car.car_type=#{query.carType}
+        </if>
+        <if test="query.deptId != null">
+            and car.dept_id=#{query.deptId}
+        </if>
+        <if test="query.bindStatus != null and query.bindStatus==1">
+            and carDev.car_id is not null
+        </if>
+        <if test="query.bindStatus != null and query.bindStatus==0">
+            and carDev.car_id is null
+        </if>
+        order by car.create_time desc
+    </select>
+
+    <select id="selectCarInfoById" resultType="com.htstar.ovms.enterprise.api.dto.CarInfoMapAreaDTO">
+        SELECT
+        car.*,
+        etp.etp_name,
+        dev.device_sn,
+        dept.name as deptName,
+        u.nick_name AS driverName,
+        ma.map_area_code1 as mapAreaCode1,
+        ma.map_area_code2 as mapAreaCode2,
+        ma.map_area_code3 as mapAreaCode3,
+        ma.map_area_name as mapAreaName
+    FROM
+        car_info car
+        LEFT JOIN etp_info etp ON car.etp_id = etp.id
+        LEFT JOIN car_device dev ON car.id=dev.car_id
+        left join `driver_map_area_car_info` ma on  car.id=ma.map_car_info_id
+        LEFT JOIN sys_dept dept ON car.`dept_id`=dept.`dept_id`
+	    LEFT JOIN car_driver_info dri ON car.`driver_id`=dri.`id`
+	    LEFT JOIN sys_user u ON dri.`user_id`=u.`user_id`
+        where car.id =#{id}
+    </select>
+
+    <select id="exportCarInfo" resultMap="carInfoMap">
+        SELECT
+        car.*,
+        etp.etp_name,
+        carDev.device_sn,
+        usr.username as username,
+        (select nick_name from sys_user where user_id = driver.user_id)as driverName
+        FROM
+        car_info car
+        LEFT JOIN etp_info etp ON car.etp_id = etp.id
+        LEFT JOIN car_device carDev ON carDev.car_id = car.id
+        LEFT JOIN sys_user usr ON usr.user_id = car.user_id
+        left join car_driver_info driver ON driver.id = car.driver_id
+        where car.del_flag = 0
+        <if test="query !=null">
+            <if test="query.licCode != null and query.licCode !=''">
+                and car.lic_code like concat('%',#{query.licCode},'%')
+            </if>
+            <if test="query.etpId != null and query.etpId !=0">
+                and etp.id = #{query.etpId}
+            </if>
+            <if test="query.carType != null">
+                and car.car_type=#{query.carType}
+            </if>
+            <if test="query.bindStatus != null and query.bindStatus==1">
+                and carDev.car_id is not null
+            </if>
+            <if test="query.bindStatus != null and query.bindStatus==0">
+                and carDev.car_id is null
+            </if>
+            <if test="list !=null and list.size()>0">
+                and car.id in
+                <foreach collection="list" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </if>
+        order by car.create_time desc
+    </select>
+
+    <select id="selectCarLocationPage" resultMap="carLocationVO">
+        SELECT
+        carDev.device_sn,
+        car.lic_code,
+        devlast.online,
+        devlast.car_status,
+        devlast.lat,
+        devlast.lng,
+        devlast.gps_time,
+        etp.etp_name,
+        suBrand.car_sub_brand
+        FROM
+        car_info car
+        LEFT JOIN car_device carDev ON car.id = carDev.car_id
+        LEFT JOIN device_last_data devlast ON devlast.device_sn = carDev.device_sn
+        LEFT JOIN car_model model ON model.car_id = car.id
+        LEFT JOIN car_sub_brand suBrand ON suBrand.id= model.sub_brand_id
+        LEFT JOIN etp_info etp ON etp.id = car.etp_id
+        where car.del_flag = 0
+        <if test="query.etpId != null and query.etpId !=''">
+            and car.etp_id=#{query.etpId}
+        </if>
+        <if test="query.licCode != null and query.licCode !=''">
+            and car.lic_code like concat('%',#{query.licCode},'%')
+        </if>
+        order by car.create_time ASC
+    </select>
+    <select id="selectCarDriving" resultType="com.htstar.ovms.enterprise.api.vo.CarRealTimeDrivingVO">
+    SELECT
+        ( SELECT lic_code FROM car_info WHERE id = carDev.car_id ) AS licCode,
+        TIMESTAMPDIFF( MINUTE, trip.sta_time, trip.end_time ) AS longTime,
+        devlast.ONLINE,
+        devlast.speed,
+        devlast.rpm,
+        trip.sta_latlon AS staLatlon,
+        trip.end_latlon AS endLatlon,
+        trip.end_time AS endTime,
+        trip.mileage,
+        trip.device_sn AS deviceSn,
+        trip.fuel_consumption AS fuelConsumption,
+        ( SELECT alarm_flag FROM device_alarm WHERE deviceSn = device_alarm.device_sn AND alarm_type = 1 ) AS lowPoWerFlag,
+        ( SELECT alarm_flag FROM device_alarm WHERE deviceSn = device_alarm.device_sn AND alarm_type = 2 ) AS wtRFlag
+    FROM
+        device_trip trip
+        LEFT JOIN car_device carDev ON trip.device_sn = carDev.device_sn
+        LEFT JOIN device_last_data devlast ON devlast.device_sn = carDev.device_sn
+        LEFT JOIN device_alarm alarm ON alarm.device_sn = trip.device_sn
+    WHERE
+        carDev.device_sn = #{deviceSn}
+
+    ORDER BY
+        trip.end_time DESC
+        LIMIT 1
+    </select>
+    <!--企业档案管理车辆分页-->
+    <select id="queryPage" resultType="com.htstar.ovms.enterprise.api.entity.CarInfo">
+        SELECT
+        car.*,
+        dept.`name` as deptName,
+        carDev.device_sn,
+        usr.nick_name as driverName
+        FROM
+        car_info car
+        LEFT JOIN sys_dept dept ON car.`dept_id` = dept.`dept_id`
+        LEFT JOIN car_device carDev ON carDev.car_id = car.id
+        LEFT JOIN car_driver_info dri ON car.`driver_id`=dri.`id`
+        LEFT JOIN sys_user usr ON usr.user_id = dri.`user_id`
+        where car.del_flag = 0
+        <if test="query.licCode != null and query.licCode !=''">
+            and car.lic_code like concat('%',#{query.licCode},'%')
+        </if>
+        <if test="query.etpId != null">
+            and car.etp_id = #{query.etpId}
+        </if>
+        <if test="query.deptId != null">
+            and car.dept_id=#{query.deptId}
+        </if>
+        <if test="query.userId>0">
+            AND dri.user_id=#{query.userId}
+        </if>
+        order by car.create_time desc
+    </select>
+
+    <!--获取所有id-->
+    <select id="getIdList" resultType="java.lang.Integer">
+        SELECT id FROM car_info WHERE del_flag=0 AND etp_id=#{etpId}
+    </select>
+
+    <select id="exportExcel" resultType="com.htstar.ovms.enterprise.api.entity.CarInfo">
+        SELECT
+        car.*,
+        dept.`name` as deptName,
+        carDev.device_sn,
+        usr.nick_name as username
+        FROM
+        car_info car
+        LEFT JOIN sys_dept dept ON car.`dept_id` = dept.`dept_id`
+        LEFT JOIN car_device carDev ON carDev.car_id = car.id
+        LEFT JOIN car_driver_info dri ON car.`driver_id`=dri.`id`
+        LEFT JOIN sys_user usr ON usr.user_id = dri.`user_id`
+        where car.del_flag = 0
+        <if test="query.ids!=null and query.ids!=''">
+            and car.id in (${query.ids})
+        </if>
+        <if test="query.licCode != null and query.licCode !=''">
+            and car.lic_code like concat('%',#{query.licCode},'%')
+        </if>
+        <if test="query.etpId != null">
+            and car.etp_id = #{query.etpId}
+        </if>
+        <if test="query.deptId != null">
+            and car.dept_id=#{query.deptId}
+        </if>
+        order by car.create_time desc
+    </select>
+    <select id="getCarInfoByDeptId" resultType="com.htstar.ovms.admin.api.vo.CarInfoVO">
+        SELECT
+            id AS carId,
+            lic_code AS licCode
+        FROM
+            car_info
+        where del_flag = 0 and dept_id=#{deptId}
+    </select>
+    <!--司机名下车辆-->
+    <select id="getLicCodeByUser" resultType="java.lang.String">
+        SELECT
+        car.`lic_code`
+        FROM
+        car_info car
+        LEFT JOIN car_driver_info dr
+        ON car.`driver_id` = dr.`id`
+       WHERE dr.`user_id` = #{userId}
+    </select>
+
+    <select id="selectCarPage" resultMap="carDriverScheduleVO">
+        SELECT
+        car.id AS car_id,
+        car.lic_code,
+        car.driver_id,
+        car.seate_num,
+        car.car_level,
+        se.remark,
+        etp.etp_name,
+        (
+        CASE
+        WHEN se.not_schedule_week LIKE CONCAT( '%',#{query.week},'%' )
+        OR se.schedule_status = 0
+        OR DATE_FORMAT(se.end_time, '%Y-%m-%d') = #{query.queryTime} or DATE_FORMAT(se.start_time, '%Y-%m-%d') = #{query.queryTime} THEN 1 ELSE 0 END ) as statusNo,
+        suBrand.car_sub_brand,
+        ( SELECT nick_name FROM sys_user WHERE user_id = driver.user_id ) AS driverName,
+        dept.NAME AS deptName,
+        (
+        CASE
+
+        WHEN (
+        SELECT
+        count(*)
+        FROM
+        apply_car_order app
+        LEFT JOIN sys_user sys ON app.driver_id = sys.user_id
+        WHERE
+        app.process_status IN ( 1, 3, 4, 6, 8, 9, 10, 11, 12 )
+        AND app.car_id = car.id
+        ) > 0 THEN
+        1 ELSE 0
+        END
+        ) AS paixun
+        FROM
+        car_info car
+        INNER JOIN etp_info etp ON car.etp_id = etp.id
+        LEFT JOIN sys_dept dept ON dept.dept_id = car.dept_id
+        LEFT JOIN car_model model ON model.car_id = car.id
+        LEFT JOIN car_sub_brand suBrand ON suBrand.id = model.sub_brand_id
+        LEFT JOIN car_driver_info driver ON driver.id = car.driver_id
+        LEFT JOIN car_driver_schedule_setting se ON se.car_id = car.id
+        WHERE
+        car.del_flag = 0
+        <if test="query.etpId!=null">
+            and car.etp_id=#{query.etpId}
+        </if>
+        <if test="query.licCodeOrriverName!=null and query.licCodeOrriverName!=''">
+            and car.lic_code like concat('%',#{query.licCodeOrriverName},'%')
+        </if>
+        <if test="query.carDeviceStatus != null">
+            and car.car_status=0
+        </if>
+<!--        <if test="query.scheduleStatus!=null and query.scheduleStatus!='' and query.scheduleStatus == 1">-->
+<!--            and (CASE WHEN se.not_schedule_week IN ( 1, 2, 3, 4, 5, 6, 7 ) THEN 1 ELSE 0 END ) =1-->
+<!--        </if>-->
+<!--        <if test="query.scheduleStatus!=null and query.scheduleStatus!='' and query.scheduleStatus == 2">-->
+<!--            AND (select count(*) from car_driver_schedule_setting where se.not_schedule_week is null-->
+<!--            or se.not_schedule_week not in (1,2,3,4,5,6,7) ) >0-->
+<!--        </if>-->
+        order by (paixun > 0 and car.create_time ) desc ,car.create_time desc
+    </select>
+    <select id="selectCarLocations" resultType="com.htstar.ovms.enterprise.api.vo.CarLocationsLatLngVO">
+        SELECT
+        carDev.device_sn,
+        car.lic_code,
+        devlast.lat,
+        devlast.online,
+        devlast.lng
+        FROM
+        car_info car
+        LEFT JOIN car_device carDev ON car.id = carDev.car_id
+        LEFT JOIN device_last_data devlast ON devlast.device_sn = carDev.device_sn
+        LEFT JOIN car_model model ON model.car_id = car.id
+        LEFT JOIN car_sub_brand suBrand ON suBrand.id= model.sub_brand_id
+        LEFT JOIN etp_info etp ON etp.id = car.etp_id
+        where car.del_flag = 0
+        <if test="etpId != null and etpId !=''">
+            and car.etp_id=#{etpId}
+        </if>
+        <if test="licCode != null and licCode !=''">
+            and car.lic_code like concat('%',#{licCode},'%')
+        </if>
+        order by car.create_time ASC
+    </select>
+    <select id="selectCarPageTotal" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        car_info car
+        INNER JOIN etp_info etp ON car.etp_id = etp.id
+        LEFT JOIN sys_dept dept ON dept.dept_id = car.dept_id
+        LEFT JOIN car_model model ON model.car_id = car.id
+        LEFT JOIN car_sub_brand suBrand ON suBrand.id = model.sub_brand_id
+        LEFT JOIN car_driver_info driver ON driver.id = car.driver_id
+        LEFT JOIN car_driver_schedule_setting se ON se.car_id = car.id
+        WHERE
+        car.del_flag = 0
+
+        <if test="etpId!=null">
+            and car.etp_id=#{etpId}
+        </if>
+        <if test="licCodeOrriverName!=null and licCodeOrriverName!=''">
+            and car.lic_code like concat('%',#{licCodeOrriverName},'%')
+        </if>
+<!--        <if test="scheduleStatus!=null and scheduleStatus!='' and scheduleStatus == 1">-->
+<!--            and se.not_schedule_week in (1,2,3,4,5,6,7)-->
+<!--        </if>-->
+<!--        <if test="scheduleStatus!=null and scheduleStatus!='' and scheduleStatus == 2">-->
+<!--            and-->
+<!--            (select count(*) from car_driver_schedule_setting where se.not_schedule_week is null-->
+<!--            or se.not_schedule_week not in (1,2,3,4,5,6,7) ) >0-->
+<!--        </if>-->
+    </select>
+    <!--正在使用的车辆id-->
+    <select id="getUsingCarIds" resultType="java.lang.Integer">
+        SELECT car_id FROM apply_car_order
+        WHERE etp_id=#{etpId}  AND process_status IN (4, 6, 8, 9, 10)
+        GROUP BY  car_id
+    </select>
+    <select id="selectCarList" resultType="com.htstar.ovms.enterprise.api.vo.ApplyCarOrderAndDriverVO">
+        SELECT
+        car.id AS car_id,
+        car.lic_code,
+        car.driver_id,
+        car.seate_num,
+        car.car_level,
+        se.remark,
+        etp.etp_name,
+        (
+        CASE
+        WHEN se.not_schedule_week LIKE CONCAT( '%',#{query.week},'%' )
+        OR se.schedule_status = 0
+        OR DATE_FORMAT(se.end_time, '%Y-%m-%d') = #{query.queryTime} or DATE_FORMAT(se.start_time, '%Y-%m-%d') = #{query.queryTime} THEN 1 ELSE 0 END ) as statusNo,
+        suBrand.car_sub_brand,
+        ( SELECT nick_name FROM sys_user WHERE user_id = driver.user_id ) AS driverName,
+        dept.NAME AS deptName,
+        (
+        CASE
+
+        WHEN (
+        SELECT
+        count(*)
+        FROM
+        apply_car_order app
+        LEFT JOIN sys_user sys ON app.driver_id = sys.user_id
+        WHERE
+        app.process_status IN ( 1, 3, 4, 6, 8, 9, 10, 11, 12 )
+        AND app.car_id = car.id
+        ) > 0 THEN
+        1 ELSE 0
+        END
+        ) AS paixun
+        FROM
+        car_info car
+        INNER JOIN etp_info etp ON car.etp_id = etp.id
+        INNER JOIN sys_dept dept ON dept.dept_id = car.dept_id
+        LEFT JOIN car_model model ON model.car_id = car.id
+        LEFT JOIN car_sub_brand suBrand ON suBrand.id = model.sub_brand_id
+        LEFT JOIN car_driver_info driver ON driver.id = car.driver_id
+        LEFT JOIN car_driver_schedule_setting se ON se.car_id = car.id
+        WHERE
+        car.del_flag = 0
+
+
+        <if test="query.etpId!=null">
+            and car.etp_id=#{query.etpId}
+        </if>
+        <if test="query.licCodeOrriverName!=null and query.licCodeOrriverName!=''">
+            and car.lic_code like concat('%',#{query.licCodeOrriverName},'%')
+        </if>
+        <!--        <if test="query.scheduleStatus!=null and query.scheduleStatus!='' and query.scheduleStatus == 1">-->
+        <!--            and (CASE WHEN se.not_schedule_week IN ( 1, 2, 3, 4, 5, 6, 7 ) THEN 1 ELSE 0 END ) =1-->
+        <!--        </if>-->
+        <!--        <if test="query.scheduleStatus!=null and query.scheduleStatus!='' and query.scheduleStatus == 2">-->
+        <!--            AND (select count(*) from car_driver_schedule_setting where se.not_schedule_week is null-->
+        <!--            or se.not_schedule_week not in (1,2,3,4,5,6,7) ) >0-->
+        <!--        </if>-->
+        order by (paixun > 0 and car.create_time ) desc ,car.create_time desc
+    </select>
+
+</mapper>

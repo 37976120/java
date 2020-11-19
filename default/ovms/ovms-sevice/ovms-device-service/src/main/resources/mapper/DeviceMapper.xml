@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.device.mapper.DeviceMapper">
+
+    <resultMap id="deviceMap" type="com.htstar.ovms.device.api.entity.Device">
+        <id property="id" column="id"/>
+        <result property="deviceSn" column="device_sn"/>
+        <result property="productType" column="product_type"/>
+        <result property="agreeType" column="agree_type"/>
+        <result property="firmwareId" column="firmware_id"/>
+        <result property="hardwareId" column="hardware_id"/>
+        <result property="deviceStatus" column="device_status"/>
+        <result property="etpId" column="etp_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+    <!--    VO结果集 -->
+    <resultMap id="deviceVO" type="com.htstar.ovms.device.api.vo.DeviceDataVO">
+        <id column="id" property="id"/>
+        <result property="deviceSn" column="device_sn"/>
+        <result property="productType" column="product_type"/>
+        <result property="etpName" column="etp_name"/>
+        <result property="etpId" column="etp_id"/>
+        <result property="licCode" column="lic_code"/>
+        <result property="frameCode" column="frame_code"/>
+        <result property="carType" column="car_type"/>
+        <result property="username" column="username"/>
+        <result property="createTime" column="create_time"/>
+        <result property="sim" column="sim"/>
+    </resultMap>
+
+    <select id="getAllowStatus" resultType="java.lang.Integer">
+        select id from device where device_sn = #{deviceSn} AND device_status = 0 limit 1
+    </select>
+
+    <select id="selectDevicePage" resultMap="deviceVO">
+        SELECT
+        dev.id,
+        dev.device_sn,
+        dev.product_type,
+        dev.etp_id,
+        etpInfo.etp_name,
+        carInfo.lic_code,
+        carInfo.frame_code,
+        carType.car_type,
+        sysUser.username,
+        sim1.sim,
+        carDev.create_time
+        FROM
+        device dev
+        LEFT JOIN device_sim sim1 ON dev.device_sn = sim1.device_sn
+        LEFT JOIN etp_info etpInfo ON dev.etp_id = etpInfo.id
+        LEFT JOIN car_device carDev ON carDev.device_sn = dev.device_sn
+        LEFT JOIN car_info carInfo ON carInfo.id = carDev.car_id
+        LEFT JOIN car_model carModel ON carModel.car_id = carInfo.id
+        LEFT JOIN car_type carType ON carType.id = carModel.tpye_id
+        LEFT JOIN sys_user sysUser ON sysUser.user_id = carInfo.user_id
+        where dev.device_status = 0
+        <if test="query.bindStatus !=null and query.bindStatus==0">
+            and carDev.device_sn is null
+        </if>
+        <if test="query.bindStatus !=null and query.bindStatus==1">
+            and carDev.device_sn is not null
+        </if>
+        <if test="query.etpId !=null">
+            and dev.etp_id = #{query.etpId}
+        </if>
+        <if test="query.etpName !=null and query.etpName!=''">
+            and etpInfo.etp_name like concat('%',#{query.etpName},'%')
+        </if>
+        <if test="query.licOrFrameCode !=null and query.licOrFrameCode!=''">
+            and (
+            carInfo.lic_code like concat('%',#{query.licOrFrameCode},'%')
+            or
+            carInfo.frame_code like concat('%',#{query.licOrFrameCode},'%')
+            )
+        </if>
+        <if test="query.deviceSn !=null and query.deviceSn!=''">
+            and dev.device_sn like concat('%',#{query.deviceSn},'%')
+        </if>
+        <if test="query.username !=null and query.username!=''">
+            and sysUser.username like concat('%',#{query.username},'%')
+        </if>
+        <if test="query.createTime !=null and query.createTime!=''">
+            and carDev.create_time >= #{query.createTime}
+        </if>
+        <if test="query.sim !=null and query.sim !=''">
+            and sim1.sim like concat('%',#{query.sim},'%')
+        </if>
+        order by dev.create_time desc
+    </select>
+
+    <select id="IsBindByDeviceSn" resultType="java.lang.Boolean">
+        select count(device_sn) from car_device where device_sn=#{deviceSn}
+    </select>
+
+    <select id="selectDeviceDataVOByDeviceSn" resultMap="deviceVO">
+        SELECT
+        dev.device_sn,
+        dev.product_type,
+        sim1.sim,
+        etp.etp_name,
+        carDev.create_time
+    FROM
+        device dev LEFT JOIN device_sim sim1 ON dev.device_sn = sim1.device_sn
+        LEFT JOIN etp_info etp ON etp.id = dev.etp_id
+        LEFT JOIN car_device carDev ON carDev.device_sn = dev.device_sn
+    WHERE
+        dev.device_sn = #{deviceSn}
+    </select>
+
+    <select id="exportDeviceInfo" resultMap="deviceVO">
+        SELECT
+        dev.id,
+        dev.device_sn,
+        item.label as lable,
+        dev.etp_id,
+        etpInfo.etp_name,
+        carInfo.lic_code,
+        carInfo.frame_code,
+        carType.car_type,
+        sysUser.username,
+        sim1.sim,
+        carDev.create_time
+        FROM
+        device dev
+        LEFT JOIN device_sim sim1 ON dev.device_sn = sim1.device_sn
+        LEFT JOIN etp_info etpInfo ON dev.etp_id = etpInfo.id
+        LEFT JOIN car_device carDev ON carDev.device_sn = dev.device_sn
+        LEFT JOIN car_info carInfo ON carInfo.id = carDev.car_id
+        LEFT JOIN car_model carModel ON carModel.car_id = carInfo.id
+        LEFT JOIN car_type carType ON carType.id = carModel.tpye_id
+        LEFT JOIN sys_user sysUser ON sysUser.user_id = carInfo.user_id
+        left JOIN sys_dict_item item ON item.`value` = dev.product_type
+        where dev.device_status = 0  and item.type="device_type"
+        <if test="query.bindStatus !=null and query.bindStatus==0">
+            and carDev.device_sn is null
+        </if>
+        <if test="query.bindStatus !=null and query.bindStatus==1">
+            and carDev.device_sn is not null
+        </if>
+        <if test="query.etpId !=null">
+            and dev.etp_id = #{query.etpId}
+        </if>
+        <if test="query.etpName !=null and query.etpName!=''">
+            and etpInfo.etp_name like concat('%',#{query.etpName},'%')
+        </if>
+        <if test="query.licOrFrameCode !=null and query.licOrFrameCode!=''">
+            and (
+            carInfo.lic_code like concat('%',#{query.licOrFrameCode},'%')
+            or
+            carInfo.frame_code like concat('%',#{query.licOrFrameCode},'%')
+            )
+        </if>
+        <if test="query.deviceSn !=null and query.deviceSn!=''">
+            and dev.device_sn like concat('%',#{query.deviceSn},'%')
+        </if>
+        <if test="list !=null and list.size()>0">
+            and dev.device_sn in
+            <foreach collection="list" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="query.username !=null and query.username!=''">
+            and sysUser.username like concat('%',#{query.username},'%')
+        </if>
+        <if test="query.createTime !=null and query.createTime!=''">
+            and carDev.create_time >= #{query.createTime}
+        </if>
+        <if test="query.sim !=null and query.sim !=''">
+            and sim1.sim like concat('%',#{query.sim},'%')
+        </if>
+        order by dev.create_time desc
+    </select>
+
+    <select id="getDeviceVOByDeviceSns" resultMap="deviceVO" parameterType="java.util.List">
+        SELECT
+        dev.device_sn,
+        dev.product_type,
+        etpInfo.etp_name,
+        carInfo.lic_code,
+        carInfo.frame_code,
+        carType.car_type,
+        sysUser.username,
+        userCar.create_time
+        FROM
+        device dev
+        LEFT JOIN etp_info etpInfo ON dev.etp_id = etpInfo.id
+        LEFT JOIN car_device carDev ON carDev.device_sn = dev.device_sn
+        LEFT JOIN car_info carInfo ON carInfo.id = carDev.car_id
+        LEFT JOIN car_model carModel ON carModel.car_id = carInfo.id
+        LEFT JOIN car_type carType ON carType.id = carModel.tpye_id
+        LEFT JOIN user_car userCar ON userCar.car_id = carInfo.id
+        LEFT JOIN sys_user sysUser ON sysUser.user_id = userCar.user_id
+        where dev.device_status = 0
+        and dev.device_sn=#{deviceSn}
+    </select>
+    <select id="getuserId" resultType="java.lang.Integer">
+    select info.user_id as userId from  car_info  info
+    LEFT JOIN car_driver_info carinfo on carinfo.user_id = info.user_id
+    LEFT JOIN car_device car on car.car_id= info.id
+    where car.device_sn =#{deviceSn}
+    and info.del_flag = 0 limit 1
+    </select>
+
+    <select id="getLicCode" resultType="java.lang.String">
+       select carin.lic_code as licCode from car_device car
+       LEFT JOIN car_info  carin on carin.id = car.car_id
+       LEFT JOIN device de on de.device_sn = car.device_sn
+       where de.device_sn = #{deviceSn}
+    </select>
+    <select id="getCarId" resultType="java.lang.Integer">
+      select carin.id as carId from car_device car
+       LEFT JOIN car_info  carin on carin.id = car.car_id
+       LEFT JOIN device de on de.device_sn = car.device_sn
+       where de.device_sn = #{deviceSn}
+    </select>
+
+    <delete id="removeBindingByDeviceSns" parameterType="java.util.List">
+        delete from car_device where device_sn in
+        <foreach collection='list' item='item' open='(' separator=',' close=')'>#{item}</foreach>
+    </delete>
+
+    <!--    <select id="getDevicePage" resultMap="baseResultMap">
+            SELECT d.*,e.`etp_name`,c.`lic_code`,c.`frame_code` FROM `device` d
+            LEFT JOIN `etp_info` e ON d.`etp_id`=e.`id`
+            LEFT JOIN `car_device` cd ON d.`device_sn`=cd.`device_sn`
+            LEFT JOIN `car_info` c ON cd.`car_id`=c.`id`
+            <where>
+                1=1
+                <if test="query.etpId != null and query.etpId != ''">
+                    AND e.`id`= #{query.etp}
+                    u.username LIKE CONCAT('%',#{query.username},'%')
+                </if>
+                <if test="query.bindState != null and query.bindState == 0 ">
+                    AND cd.`car_id` IS NOT NULL
+                </if>
+                <if test="query.bindState != null and query.bindState == 1 ">
+                    AND cd.`car_id` IS NULL
+                </if>
+                <if test="query.deviceSn != null and query.deviceSn != ''">
+                    AND d.`device_sn` LIKE  CONCAT('%',#{query.deviceSn},'%')
+                </if>
+                <if test="query.licCode != null and query.licCode != ''">
+                    AND (c.`lic_code` LIKE  CONCAT('%',#{query.licCode},'%') OR c.`frame_code` LIKE  CONCAT('%',#{query.licCode},'%'))
+                </if>
+            </where>
+            ORDER BY d.create_time DESC
+        </select>-->
+    <!--    <select id="getDevicePage" resultMap="baseResultMap">
+            SELECT d.*,e.`etp_name`,c.`lic_code`,c.`frame_code` FROM `device` d
+            LEFT JOIN `etp_info` e ON d.`etp_id`=e.`id`
+            LEFT JOIN `car_device` cd ON d.`device_sn`=cd.`device_sn`
+            LEFT JOIN `car_info` c ON cd.`car_id`=c.`id`
+            <where>
+                1=1
+                <if test="query.etpId != null and query.etpId != ''">
+                    AND e.`id`= #{query.etp}
+                    u.username LIKE CONCAT('%',#{query.username},'%')
+                </if>
+                <if test="query.bindState != null and query.bindState == 0 ">
+                    AND cd.`car_id` IS NOT NULL
+                </if>
+                <if test="query.bindState != null and query.bindState == 1 ">
+                    AND cd.`car_id` IS NULL
+                </if>
+                <if test="query.deviceSn != null and query.deviceSn != ''">
+                    AND d.`device_sn` LIKE  CONCAT('%',#{query.deviceSn},'%')
+                </if>
+                <if test="query.licCode != null and query.licCode != ''">
+                    AND (c.`lic_code` LIKE  CONCAT('%',#{query.licCode},'%') OR c.`frame_code` LIKE  CONCAT('%',#{query.licCode},'%'))
+                </if>
+            </where>
+            ORDER BY d.create_time DESC
+        </select>-->
+
+</mapper>

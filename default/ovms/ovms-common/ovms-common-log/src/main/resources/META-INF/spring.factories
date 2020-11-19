@@ -1,0 +1,4 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+    com.htstar.ovms.common.log.LogAutoConfiguration
+org.springframework.context.ApplicationContextInitializer=\
+    com.htstar.ovms.common.log.init.ApplicationLoggerInitializer

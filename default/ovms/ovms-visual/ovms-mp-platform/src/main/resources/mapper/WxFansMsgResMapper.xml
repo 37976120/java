@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.mp.mapper.WxFansMsgResMapper">
+
+	<resultMap id="wxFansMsgResMap" type="com.htstar.ovms.mp.entity.WxFansMsgRes">
+		<id property="id" column="id"/>
+		<result property="fansMsgId" column="fans_msg_id"/>
+		<result property="resContent" column="res_content"/>
+		<result property="userId" column="user_id"/>
+		<result property="userName" column="user_name"/>
+		<result property="createTime" column="create_time"/>
+		<result property="updateTime" column="update_time"/>
+	</resultMap>
+</mapper>

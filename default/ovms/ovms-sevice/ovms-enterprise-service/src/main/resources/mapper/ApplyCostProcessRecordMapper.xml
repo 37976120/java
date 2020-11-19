@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.ApplyCostProcessRecordMapper">
+
+    <resultMap id="applyCostProcessRecordMap" type="com.htstar.ovms.enterprise.api.entity.ApplyCostProcessRecord">
+        <id property="id" column="id"/>
+        <result property="etpId" column="etp_id"/>
+        <result property="operationUserId" column="operation_user_id"/>
+        <result property="applyUserId" column="apply_user_id"/>
+        <result property="costId" column="cost_id"/>
+        <result property="carId" column="car_id"/>
+        <result property="costType" column="cost_type"/>
+        <result property="operationType" column="operation_type"/>
+        <result property="createTime" column="create_time"/>
+        <result property="delFlag" column="del_flag"/>
+    </resultMap>
+    <sql id="clums">
+    id,
+    etp_id,
+    operation_user_id,
+    apply_user_id,
+    cost_id,
+    car_id,
+    cost_type,
+    operation_type,
+    create_time,
+    del_flag,
+  </sql>
+    <update id="delByCostIdAndCostType">
+      UPDATE apply_cost_process_record SET del_flag=1
+      WHERE cost_type=#{costType} AND cost_id=#{costId}
+    </update>
+
+    <select id="getApplyRecordById" resultType="com.htstar.ovms.enterprise.api.vo.ApplyCostProcessRecordVo">
+        SELECT
+          *
+        FROM
+          apply_cost_process_record
+        WHERE cost_id = #{costId}
+          AND cost_type = #{costType}
+          AND operation_type = 0
+    </select>
+    <select id="queryPage" resultType="com.htstar.ovms.enterprise.api.vo.ApplyCostProcessRecordVo">
+         SELECT
+          r.*,
+          c.lic_code as licCode,
+          u.`nick_name` as applyName,
+          u.username as phone,
+          dep.name as deptName
+        FROM
+          apply_cost_process_record r
+          LEFT JOIN car_info c
+            ON r.car_id = c.id
+          LEFT JOIN sys_user u
+            ON r.apply_user_id = u.`user_id`
+        LEFT JOIN sys_dept dep ON u.`dept_id`=dep.dept_id
+        WHERE r.etp_id = #{req.etpId} and r.del_flag=0
+        <if test="req.startTime!=null">
+           and r.cost_time &gt;=#{req.startTime}
+        </if>
+        <if test="req.endTime!=null">
+            and r.cost_time &lt;=#{req.endTime}
+        </if>
+        <if test="req.operationType!=null">
+            and r.operation_type=#{req.operationType}
+        </if>
+        <if test="req.licCode!=null">
+            and c.lic_code=#{req.licCode}
+        </if>
+        <if test="req.id!=null and req.id>0">
+            and r.id=#{req.id}
+        </if>
+        ORDER BY r.create_time  DESC
+    </select>
+    <select id="exportExcel" resultType="com.htstar.ovms.enterprise.api.vo.ApplyCostProcessRecordVo">
+        SELECT
+        r.*,
+        c.lic_code as licCode,
+        u.`nick_name` as applyName
+        FROM
+        apply_cost_process_record r
+        LEFT JOIN car_info c
+        ON r.car_id = c.id
+        LEFT JOIN sys_user u
+        ON r.apply_user_id = u.`user_id`
+        WHERE r.etp_id = #{req.etpId}
+        <if test="req.ids!=null and req.ids!=''">
+            and r.id IN (${req.ids})
+        </if>
+        <if test="req.startTime!=null">
+            and  r.cost_time &gt;=#{req.startTime}
+        </if>
+        <if test="req.endTime!=null">
+            and r.cost_time &lt;=#{req.endTime}
+        </if>
+        <if test="req.itemStatus!=null">
+            and r.operation_type=#{req.itemStatus}
+        </if>
+        <if test="req.licCode!=null">
+            and c.lic_code=#{req.licCode}
+        </if>
+        ORDER BY r.create_time  DESC
+    </select>
+    <select id="getNickName" resultType="java.lang.String">
+      SELECT nick_name FROM sys_user WHERE user_id=#{userId}
+    </select>
+</mapper>

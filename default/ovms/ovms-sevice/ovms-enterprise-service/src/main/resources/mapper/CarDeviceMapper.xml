@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.CarDeviceMapper">
+
+  <resultMap id="carDeviceMap" type="com.htstar.ovms.enterprise.api.entity.CarDevice">
+                  <id property="carId" column="car_id"/>
+                        <result property="deviceSn" column="device_sn"/>
+                        <result property="createTime" column="create_time"/>
+            </resultMap>
+    <insert id="setAlarmRemind" parameterType="com.htstar.ovms.enterprise.api.entity.CarAlarmRemind">
+        INSERT INTO car_alarm_remind
+        (car_id,
+        pull_out,
+        low_battery,
+        tow,
+        ignition,
+        water_temp,
+        abnormal,
+        malfunction,
+        collision,
+        speed_type,
+        report,
+        week_report,
+        month_report,
+        res_report
+        )
+        VALUE(
+        #{req.carId},
+        #{req.pullOut},
+        #{req.lowBattery},
+        #{req.tow},
+        #{req.ignition},
+        #{req.waterTemp},
+        #{req.abnormal},
+        #{req.malfunction},
+        #{req.collision},
+        #{req.speedType},
+        #{req.report},
+        #{req.weekReport},
+        #{req.monthReport},
+        #{req.resReport}
+       )
+        ON DUPLICATE KEY UPDATE
+        pull_out=#{req.pullOut},
+        low_battery=#{req.lowBattery},
+        tow=#{req.tow},
+        ignition=#{req.ignition},
+        water_temp=#{req.waterTemp},
+        abnormal=#{req.abnormal},
+        malfunction=#{req.malfunction},
+        collision=#{req.collision},
+        speed_type=#{req.speedType},
+        report=#{req.report},
+        week_report=#{req.weekReport},
+        month_report=#{req.monthReport},
+        res_report=#{req.resReport}
+    </insert>
+    <select id="getDeviceSnByEtp" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM car_device dev
+        LEFT JOIN car_info car ON car.`id`=dev.`car_id`
+        WHERE car.`etp_id`=#{etpId} AND car.`del_flag`=0
+    </select>
+    <select id="getOnline" resultType="java.lang.Integer">
+       SELECT COUNT(1) FROM car_device dev
+      LEFT JOIN device_last_data dlast  ON dev.`device_sn`=dlast.`device_sn`
+      LEFT JOIN car_info car  ON car.`id`=dev.`car_id`
+      WHERE dlast.`online`=1 AND car.`etp_id`=#{etpId}
+    </select>
+    <select id="getAlarmRemind" resultType="com.htstar.ovms.enterprise.api.entity.CarAlarmRemind">
+        SELECT * FROM car_alarm_remind WHERE car_id=#{carId}
+    </select>
+</mapper>

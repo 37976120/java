@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.CarDriverInfoMapper">
+
+    <resultMap id="carDriverScheduleVO" type="com.htstar.ovms.enterprise.api.vo.ApplyCarOrderAndDriverVO">
+        <result property="carId" column="car_id"/>
+        <result property="driverId" column="driver_id"/>
+        <result property="phone" column="phone"/>
+        <result property="driverName" column="driverName"/>
+        <result property="licenseType" column="license_type"/>
+        <result property="etpName" column="etp_name"/>
+        <result property="licCode" column="lic_code"/>
+        <result property="carSubBrand" column="car_sub_brand"/>
+        <result property="seateNum" column="seate_num"/>
+        <result property="getLicenseTime" column="get_license_time"/>
+        <result property="sex" column="sex"/>
+    </resultMap>
+
+    <!--分页-->
+    <select id="queryPage" resultType="com.htstar.ovms.enterprise.api.vo.CarDriverPageVO">
+        SELECT
+        u.nick_name as username,
+        u.phone,
+        u.sex as sex,
+        d.*
+        FROM
+        car_driver_info d
+        LEFT JOIN sys_user u ON d.`user_id` = u.`user_id`
+       where d.del_flag=0
+            <if test="carFileManageReq.etpId!= null ">
+                AND d.`etp_id`=#{carFileManageReq.etpId}
+            </if>
+            <if test="carFileManageReq.deptId!=null">
+                and u.dept_id=#{carFileManageReq.deptId}
+            </if>
+            <if test="carFileManageReq.name!= null and carFileManageReq.name!= ''">
+                AND (u.`nick_name`like concat ('%',#{carFileManageReq.name},'%') or u.`phone` like concat
+                ('%',#{carFileManageReq.name},'%'))
+            </if>
+    </select>
+    <!--获取所有id-->
+    <select id="getIdList" resultType="java.lang.Integer">
+          SELECT id FROM car_driver_info WHERE del_flag=0 AND etp_id=#{etpId}
+    </select>
+    <!--导出excel-->
+    <select id="exportExcel" resultType="com.htstar.ovms.enterprise.api.vo.CarDriverPageVO">
+        SELECT
+        u.nick_name as username,
+        u.phone,
+        u.sex,
+        d.*
+        FROM
+        car_driver_info d
+        LEFT JOIN sys_user u ON d.`user_id` = u.`user_id`
+        where d.del_flag=0
+        <if test="req.ids!=null and req.ids!=''">
+            AND d.id IN (${req.ids})
+        </if>
+        <if test="req.etpId!= null ">
+            AND d.`etp_id`=#{req.etpId}
+        </if>
+        <if test="req.name!= null and req.name!= ''">
+            AND u.`username`like concat('%',#{req.name},'%') or u.`phone`like concat('%',#{req.name},'%')
+        </if>
+    </select>
+    <select id="getDriverVO" resultType="com.htstar.ovms.enterprise.api.vo.DriverVO">
+        SELECT
+          user_id,
+          username,
+          nick_name
+        FROM
+          `sys_user`
+        WHERE user_id = #{userId} limit 1
+    </select>
+
+    <select id="selectDriverInfoPage" resultMap="carDriverScheduleVO">
+        SELECT
+        usr.phone,
+        usr.nick_name AS driverName,
+        usr.sex,
+        driver.user_id AS driver_id,
+        driver.license_type,
+        driver.get_license_time
+        FROM
+        car_driver_info driver
+        LEFT JOIN sys_user usr ON usr.user_id = driver.user_id
+        where driver.del_flag =0
+        <if test="query.etpId !=null">
+            and driver.etp_id=#{query.etpId}
+        </if>
+        <if test="query.licCodeOrriverName!=null and query.licCodeOrriverName!=''">
+            and usr.username like concat('%',#{query.licCodeOrriverName},'%')
+        </if>
+        order by driver.create_time desc
+    </select>
+    <select id="getNickName" resultType="java.lang.String">
+        select nick_name from sys_user where user_id = #{userId} limit 1
+    </select>
+    <select id="selectNoDriverInfoPage"
+            resultType="com.htstar.ovms.enterprise.api.vo.ApplyCarOrderAndDriverVO">
+        SELECT
+        usr.phone,
+        usr.nick_name AS driverName,
+        usr.sex,
+        se.remark,
+        driver.id,
+        (
+        CASE
+        WHEN se.not_schedule_week LIKE CONCAT( '%',#{query.week},'%' )
+        OR se.schedule_status = 0
+        OR DATE_FORMAT(se.end_time, '%Y-%m-%d') = #{query.queryTime} or DATE_FORMAT(se.start_time, '%Y-%m-%d') = #{query.queryTime} THEN 1 ELSE 0 END ) as statusNo,
+        driver.user_id AS driver_id,
+        driver.license_type,
+        driver.get_license_time,
+        (
+        CASE
+
+        WHEN (
+        SELECT
+        count(*)
+        FROM
+        apply_car_order app
+        LEFT JOIN sys_user sys ON app.driver_id = sys.user_id
+        WHERE
+        app.process_status IN ( 1, 3, 4, 6, 8, 9, 10, 11, 12 )
+        AND app.driver_id = driver.user_id
+        ) > 0 THEN
+        1 ELSE 0
+        END
+        ) AS paixun
+        FROM
+        car_driver_info driver
+        LEFT JOIN car_driver_schedule_setting se ON se.driver_id = driver.user_id
+        LEFT JOIN sys_user usr ON usr.user_id = driver.user_id
+        WHERE
+        driver.del_flag =0
+        <if test="query.etpId !=null">
+            and driver.etp_id=#{query.etpId}
+        </if>
+        <if test="query.licCodeOrriverName!=null and query.licCodeOrriverName!=''">
+            and usr.nick_name like concat('%',#{query.licCodeOrriverName},'%')
+        </if>
+        <if test="query.carDeviceStatus != null">
+            and driver.driver_status = 0
+        </if>
+<!--        <if test="query.scheduleStatus!=null and query.scheduleStatus!='' and query.scheduleStatus == 1">-->
+<!--            and (CASE WHEN se.not_schedule_week IN ( 1, 2, 3, 4, 5, 6, 7 ) THEN 1 ELSE 0 END ) =1-->
+<!--        </if>-->
+<!--        <if test="query.scheduleStatus!=null and query.scheduleStatus!='' and query.scheduleStatus == 2">-->
+<!--            AND (select count(*) from car_driver_schedule_setting where se.not_schedule_week is null-->
+<!--            or se.not_schedule_week not in (1,2,3,4,5,6,7) ) >0-->
+<!--        </if>-->
+        ORDER BY
+        (paixun > 0 and driver.create_time ) desc,driver.create_time desc
+    </select>
+    <select id="selectNoDriverInfoPageTotal" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        car_driver_info driver
+        LEFT JOIN car_driver_schedule_setting se ON se.driver_id = driver.user_id
+        LEFT JOIN sys_user usr ON usr.user_id = driver.user_id
+        WHERE
+        driver.del_flag =0
+        <if test="etpId !=null">
+            and driver.etp_id=#{etpId}
+        </if>
+        <if test="licCodeOrriverName!=null and licCodeOrriverName!=''">
+            and usr.username like concat('%',#{licCodeOrriverName},'%')
+        </if>
+<!--        <if test="scheduleStatus!=null and scheduleStatus!='' and scheduleStatus == 1">-->
+<!--            and se.not_schedule_week in (1,2,3,4,5,6,7)-->
+<!--        </if>-->
+<!--        <if test="scheduleStatus!=null and scheduleStatus!='' and scheduleStatus == 2">-->
+<!--            and-->
+<!--            (select count(*) from car_driver_schedule_setting where se.not_schedule_week is null-->
+<!--            or se.not_schedule_week not in (1,2,3,4,5,6,7) ) >0-->
+<!--        </if>-->
+    </select>
+    <select id="selectNoDriverInfoList"
+            resultType="com.htstar.ovms.enterprise.api.vo.ApplyCarOrderAndDriverVO">
+        SELECT
+        usr.phone,
+        usr.nick_name AS driverName,
+        usr.sex,
+        se.remark,
+        driver.id,
+        (
+        CASE
+        WHEN se.not_schedule_week LIKE CONCAT( '%',#{query.week},'%' )
+        OR se.schedule_status = 0
+        OR DATE_FORMAT(se.end_time, '%Y-%m-%d') = #{query.queryTime} or DATE_FORMAT(se.start_time, '%Y-%m-%d') = #{query.queryTime} THEN 1 ELSE 0 END ) as statusNo,
+        driver.user_id AS driver_id,
+        driver.license_type,
+        driver.get_license_time,
+        (
+        CASE
+
+        WHEN (
+        SELECT
+        count(*)
+        FROM
+        apply_car_order app
+        LEFT JOIN sys_user sys ON app.driver_id = sys.user_id
+        WHERE
+        app.process_status IN ( 1, 3, 4, 6, 8, 9, 10, 11, 12 )
+        AND app.driver_id = driver.user_id
+        ) > 0 THEN
+        1 ELSE 0
+        END
+        ) AS paixun
+        FROM
+        car_driver_info driver
+        LEFT JOIN car_driver_schedule_setting se ON se.driver_id = driver.user_id
+        LEFT JOIN sys_user usr ON usr.user_id = driver.user_id
+        WHERE
+        driver.del_flag =0
+        <if test="query.etpId !=null">
+            and driver.etp_id=#{query.etpId}
+        </if>
+        <if test="query.licCodeOrriverName!=null and query.licCodeOrriverName!=''">
+            and usr.nick_name like concat('%',#{query.licCodeOrriverName},'%')
+        </if>
+        <!--        <if test="query.scheduleStatus!=null and query.scheduleStatus!='' and query.scheduleStatus == 1">-->
+        <!--            and (CASE WHEN se.not_schedule_week IN ( 1, 2, 3, 4, 5, 6, 7 ) THEN 1 ELSE 0 END ) =1-->
+        <!--        </if>-->
+        <!--        <if test="query.scheduleStatus!=null and query.scheduleStatus!='' and query.scheduleStatus == 2">-->
+        <!--            AND (select count(*) from car_driver_schedule_setting where se.not_schedule_week is null-->
+        <!--            or se.not_schedule_week not in (1,2,3,4,5,6,7) ) >0-->
+        <!--        </if>-->
+        ORDER BY
+        (paixun > 0 and driver.create_time ) desc,driver.create_time desc
+    </select>
+    <select id="getUsingDriverUserIds" resultType="java.lang.Integer">
+            SELECT driver_id FROM apply_car_order
+            WHERE etp_id=#{etpId}  AND process_status IN (4, 6, 8, 9, 10)
+            GROUP BY  driver_id
+    </select>
+</mapper>

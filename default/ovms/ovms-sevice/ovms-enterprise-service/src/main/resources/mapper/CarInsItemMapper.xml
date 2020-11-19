@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.CarInsItemMapper">
+    <!--保险过期数-->
+    <select id="expiredNumByEtp" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM (SELECT car_id, MAX(end_time) AS end_time FROM car_ins_item WHERE etp_id=#{etpId} AND del_flag=0 GROUP BY car_id) a
+        LEFT JOIN car_info car ON a.car_id =car.`id` WHERE car.`del_flag`=0 AND  a.end_time &lt;=#{date};
+    </select>
+    <!--获取所有车辆Id-->
+    <select id="getIdList" resultType="int">
+        SELECT id FROM car_ins_item WHERE del_flag=0 AND etp_id=#{etpId}
+    </select>
+    <!--导出excel-->
+    <select id="exportExcel" resultType="com.htstar.ovms.enterprise.api.vo.CarInsItemPageVO">
+        SELECT
+        c.lic_code,
+        u.nick_name as username,
+        item.*
+        FROM
+        car_ins_item item
+        LEFT JOIN car_info c ON item.car_id=c.`id`
+        LEFT JOIN sys_user u ON u.user_id=item.`user_id`
+        where item.`del_flag`=0 AND item.etp_id = #{query.etpId}
+        and item.item_status!=0
+        <if test="query.ids!=null and query.ids!=''">
+            and item.id IN (${query.ids})
+        </if>
+        <if test="query.startTime != null">
+            AND item.start_time &gt;=#{query.startTime}
+        </if>
+        <if test="query.endTime!= null">
+            AND item.start_time &lt;=#{query.endTime}
+        </if>
+        <if test="query.licCode != null and query.licCode !=''">
+            AND c.lic_code like concat('%',#{query.licCode},'%')
+        </if>
+        <if test="query.itemStatus != null  ">
+            AND item.item_status = #{query.itemStatus}
+        </if>
+        order by item.create_time desc
+    </select>
+    <!--分页-->
+    <select id="queryPage" resultType="com.htstar.ovms.enterprise.api.vo.CarInsItemPageVO">
+        SELECT
+        c.lic_code,
+        u.username,
+        item.*
+        FROM
+        car_ins_item item
+        LEFT JOIN car_info c ON item.car_id = c.`id`
+        LEFT JOIN sys_user u ON u.user_id = item.`user_id`
+        <where>
+            item.`del_flag`=0  and item.item_status !=0
+            <if test="query.startTime != null">
+                AND item.start_time &gt;=#{query.startTime}
+            </if>
+            <if test="query.endTime!= null">
+                AND item.start_time &lt;=#{query.endTime}
+            </if>
+            <if test="query.licCode != null and query.licCode !=''">
+                AND c.lic_code like concat('%',#{query.licCode},'%')
+            </if>
+            <if test="query.itemStatus != null">
+                AND item.item_status = #{query.itemStatus}
+            </if>
+            <if test="query.etpId != null">
+                AND item.etp_id = #{query.etpId}
+            </if>
+            <if test="query.userId!=null">
+                AND (item.user_id=#{query.userId}
+            </if>
+            <if test="query.licCodes !=null ">
+                or c.lic_code in
+                <foreach item="item" collection="query.licCodes" index="index" open="(" separator=","
+                         close=")">
+                    #{item}
+                </foreach>
+                )
+            </if>
+        </where>
+        order by item.create_time desc
+    </select>
+    <select id="getItemById" resultType="com.htstar.ovms.enterprise.api.vo.CarInsItemPageVO">
+          SELECT
+          i.*,
+          c.`lic_code` as licCode,
+          u.nick_name as username
+        FROM
+          car_ins_item i
+          LEFT JOIN car_info c
+            ON i.`car_id` = c.`id`
+          left join sys_user u on i.user_id=u.user_id
+        WHERE i.`id` =#{id}
+    </select>
+    <select id="getItemByUser" resultType="com.htstar.ovms.enterprise.api.vo.CarInsItemPageVO">
+           SELECT
+          i.*,
+          c.`lic_code` as licCode
+        FROM
+          car_ins_item i
+          LEFT JOIN car_info c
+            ON i.`car_id` = c.`id`
+        WHERE i.`user_id` =#{userId} and i.item_status=0
+    </select>
+
+</mapper>

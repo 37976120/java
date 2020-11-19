@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.htstar.ovms.common.gray.GrayRibbonLoadBalancerConfiguration

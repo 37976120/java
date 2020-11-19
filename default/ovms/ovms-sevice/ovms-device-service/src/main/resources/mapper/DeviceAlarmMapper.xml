@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.device.mapper.DeviceAlarmMapper">
+
+    <resultMap id="deviceAlarmMap" type="com.htstar.ovms.device.api.entity.DeviceAlarm">
+        <id property="id" column="id"/>
+        <result property="deviceSn" column="device_sn"/>
+        <result property="alarmNo" column="alarm_no"/>
+        <result property="rcvTime" column="rcv_time"/>
+        <result property="staTime" column="sta_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="alarmFlag" column="alarm_flag"/>
+        <result property="alarmType" column="alarm_type"/>
+        <result property="alarmDesc" column="alarm_desc"/>
+        <result property="staGpsId" column="sta_gps_id"/>
+        <result property="staStatId" column="sta_stat_id"/>
+        <result property="endGpsId" column="end_gps_id"/>
+        <result property="endStatId" column="end_stat_id"/>
+        <result property="isRead" column="is_read"/>
+        <result property="licCode" column="lic_code"/>
+        <result property="isDel" column="is_del"/>
+        <result property="gpsAddr" column="gps_addr"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <resultMap id="deviceAlarmVO" type="com.htstar.ovms.device.api.vo.DeviceAlarmVO">
+        <result property="collectDatetime" column="collect_datetime"/>
+        <result property="type" column="type"/>
+        <result property="gpsAddress" column="gps_address"/>
+    </resultMap>
+
+    <resultMap id="monitoringVO" type="com.htstar.ovms.device.api.vo.MonitoringVO">
+        <result property="deviceSn" column="device_sn"/>
+        <result property="etpName" column="etp_name"/>
+        <result property="licCode" column="lic_code"/>
+        <result property="gpsTime" column="gps_time"/>
+        <result property="gpsFlag" column="gps_flag"/>
+        <result property="online" column="online"/>
+        <result property="speed" column="speed"/>
+        <result property="direction" column="direction"/>
+        <result property="lat" column="lat"/>
+        <result property="lng" column="lng"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <resultMap id="monitoringSVO" type="com.htstar.ovms.device.api.vo.MonitoringLatLngVO">
+        <result property="licCode" column="lic_code"/>
+        <result property="gpsFlag" column="gps_flag"/>
+        <result property="online" column="online"/>
+        <result property="lat" column="lat"/>
+        <result property="lng" column="lng"/>
+    </resultMap>
+
+    <select id="getAlarmInfoByDeviceSnPage" resultMap="deviceAlarmVO">
+        SELECT
+        alarm.collect_datetime,
+        alarm.type,
+        alarm.gps_address
+        FROM
+        device_alarm alarm
+        WHERE
+        alarm.device_sn = #{deviceSn}
+        <if test="staTime!=null and staTime!=''">
+            and alarm.collect_datetime>=#{startTime}
+        </if>
+        <if test="endTime!=null and endTime!=''">
+            and <![CDATA[alarm.end_time <=concat(#{endTime},' 23:59:59')]]>
+        </if>
+        <if test="type!=null">
+            and alarm.type=#{type}
+        </if>
+    </select>
+    <select id="getEnt" resultType="com.htstar.ovms.device.api.entity.DeviceAlarm">
+        SELECT * FROM device_alarm
+        WHERE device_sn = #{deviceSn} and alarm_no = #{alarmNo} and alarm_type = #{alarmType}
+        ORDER BY id desc limit 1
+    </select>
+
+    <select id="getCarSecurityAlarmPage" resultType="com.htstar.ovms.device.api.vo.CarSecurityAlarmVO">
+        SELECT
+        carDev.device_sn as deviceSn,
+        car.lic_code as licCode,
+        car.id as carId,
+        etp.etp_name as etpName,
+        suBrand.car_sub_brand as carSubBrand
+        FROM
+        car_info car
+        LEFT JOIN car_device carDev ON car.id = carDev.car_id
+        LEFT JOIN car_model model ON model.car_id = car.id
+        LEFT JOIN car_sub_brand suBrand ON suBrand.id = model.sub_brand_id
+        LEFT JOIN etp_info etp ON etp.id = car.etp_id
+        WHERE
+        car.del_flag = 0
+        <if test="query.etpId != null and query.etpId !=''">
+            and car.etp_id=#{query.etpId}
+        </if>
+        <if test="query.licCode != null and query.licCode !=''">
+            and car.lic_code like concat('%',#{query.licCode},'%')
+        </if>
+        <if test="query.carId != null and query.carId !=''">
+            and car.id = #{query.carId}
+        </if>
+        order by car.id , car.register_time desc
+    </select>
+    <select id="getLastTestTime" resultType="java.time.LocalDateTime">
+            SELECT
+                rcv_time
+            FROM
+                device_alarm
+            WHERE
+                device_sn = #{deviceSn}
+            ORDER BY
+               rcv_time DESC
+               LIMIT 1
+    </select>
+
+    <select id="getAlarmByTypeAndTimePage" resultMap="deviceAlarmMap">
+        SELECT
+        alarm.*,
+        car.lic_code,
+        gps.gps_addr
+        FROM
+        device_alarm alarm
+        left join device_alarm_gps gps ON gps.id = alarm.sta_gps_id
+        LEFT JOIN car_device carDev ON alarm.device_sn = carDev.device_sn
+        LEFT JOIN car_info car ON car.id = carDev.car_id
+        where
+        alarm.is_del =0
+        <if test="query.deviceSn !=null and query.deviceSn!=''">
+            and alarm.device_sn = #{query.deviceSn}
+        </if>
+        <if test="query.startTime !=null and query.startTime!=''">
+            and alarm.sta_time >= #{query.startTime}
+        </if>
+        <if test="query.endTime !=null and query.endTime!=''">
+            and <![CDATA[alarm.end_time <= concat(#{query.endTime},' 23:59:59')]]>
+        </if>
+        <if test="query.alarmType !=null">
+            and alarm.alarm_type =#{query.alarmType}
+        </if>
+        <if test="query.licCode!=null and query.licCode!=''">
+            and car.lic_code like concat('%',#{query.licCode},'%')
+        </if>
+        <if test="query.etpId != null and query.etpId !=''">
+            and car.etp_id=#{query.etpId}
+        </if>
+        order by alarm.create_time desc
+    </select>
+    <select id="getMonitorings" resultMap="monitoringSVO">
+        SELECT
+        car.lic_code,
+        ( CASE WHEN lastd.online = 0 or lastd.online is null   THEN 0    ELSE 1 END ) as online ,
+        lastd.lat,
+        lastd.gps_flag,
+        lastd.lng,
+        mapinfo.map_area_code1 AS mapAreaCode1,
+        mapinfo.map_area_code2 AS mapAreaCode2,
+        mapinfo.map_area_code3 AS mapAreaCode3
+        FROM
+        car_info car
+        INNER JOIN car_device carDev ON carDev.car_id = car.id
+        INNER JOIN etp_info etp ON etp.id = car.etp_id
+        LEFT JOIN device_last_data lastd ON lastd.device_sn = carDev.device_sn
+        LEFT JOIN driver_map_area_car_info mapinfo ON car.id = mapinfo.map_car_info_id
+        LEFT JOIN driver_map_sys_area map ON map.tree_names = mapinfo.map_area_name
+        WHERE
+        car.del_flag = 0
+        <if test="query.licCode !=null and query.licCode !=''">
+            and car.lic_code like concat('%',#{query.licCode},'%')
+        </if>
+        <if test="query.deptIds !=null and query.deptIds.size()!=0">
+            and car.dept_id in
+            <foreach collection='query.deptIds' item='item' open='(' separator=',' close=')'>#{item}</foreach>
+        </if>
+        <if test="query.carIds !=null and query.carIds.size()!=0">
+            and car.id in
+            <foreach collection='query.carIds' item='item' open='(' separator=',' close=')'>#{item}</foreach>
+        </if>
+        <if test="query.etpIds !=null and query.etpIds.size()!=0">
+            and car.etp_id in
+            <foreach collection='query.etpIds' item='item' open='(' separator=',' close=')'>#{item}</foreach>
+        </if>
+        /*上线，离线*/
+        <if test="query.online !=null and (query.online==0 or query.online==1)">
+            and  ( CASE WHEN lastd.online = 0 or lastd.online is null   THEN 0    ELSE 1 END )=#{query.online}
+        </if>
+        /*运行*/
+        <if test="query.online !=null and query.online==2">
+            and lastd.car_status=1 or lastd.car_status=2
+        </if>
+        /*静止*/
+        <if test="query.online !=null and query.online==3">
+            and lastd.car_status=0
+        </if>
+        /*地图查找*/
+        /*省级*/
+        <if test="query.mapAreaCode1 != null and query.mapAreaCode1 != ''">
+            and mapinfo.map_area_code1 =#{query.mapAreaCode1}
+        </if>
+        /*市级*/
+        <if test="query.mapAreaCode2 != null and query.mapAreaCode2 != ''">
+            and mapinfo.map_area_code2 =#{query.mapAreaCode2}
+        </if>
+        /*区级*/
+        <if test="query.mapAreaCode3 != null and query.mapAreaCode3 != ''">
+            and mapinfo.map_area_code3 =#{query.mapAreaCode3}
+        </if>
+        order by car.create_time desc
+    </select>
+    <select id="getMonitoringPage" resultMap="monitoringVO">
+        SELECT
+        etp.etp_name,
+        car.lic_code,
+        carDev.device_sn,
+        lastd.gps_time,
+        lastd.gps_flag,
+        lastd.online,
+        lastd.speed,
+        car.id as carId,
+        lastd.direction,
+        lastd.lat,
+        lastd.lng,
+        lastd.update_time,
+        mapinfo.map_area_code1 as mapAreaCode1,
+        mapinfo.map_area_code2 as mapAreaCode2,
+        mapinfo.map_area_code3 as mapAreaCode3
+        FROM
+        car_info car
+        INNER JOIN car_device carDev ON carDev.car_id = car.id
+        INNER JOIN etp_info etp ON etp.id = car.etp_id
+        LEFT JOIN device_last_data lastd ON lastd.device_sn = carDev.device_sn
+        LEFT JOIN driver_map_area_car_info mapinfo ON car.id = mapinfo.map_car_info_id
+        LEFT JOIN driver_map_sys_area map ON map.tree_names = mapinfo.map_area_name
+        where car.del_flag=0
+        <if test="query.licCode !=null and query.licCode !=''">
+            and car.lic_code like concat('%',#{query.licCode},'%')
+        </if>
+        <if test="query.deptIds !=null and query.deptIds.size()!=0">
+            and car.dept_id in
+            <foreach collection='query.deptIds' item='item' open='(' separator=',' close=')'>#{item}</foreach>
+        </if>
+        <if test="query.carIds !=null and query.carIds.size()!=0">
+            and car.id in
+            <foreach collection='query.carIds' item='item' open='(' separator=',' close=')'>#{item}</foreach>
+        </if>
+        <if test="query.etpIds !=null and query.etpIds.size()!=0">
+            and car.etp_id in
+            <foreach collection='query.etpIds' item='item' open='(' separator=',' close=')'>#{item}</foreach>
+        </if>
+        /*上线，离线*/
+        <if test="query.online !=null and (query.online==0 or query.online==1)">
+            and  ( CASE WHEN lastd.online = 0 or lastd.online is null   THEN 0    ELSE 1 END )=#{query.online}
+        </if>
+        /*运行*/
+        <if test="query.online !=null and query.online==2">
+            and lastd.car_status=1 or lastd.car_status=2
+        </if>
+        /*静止*/
+        <if test="query.online !=null and query.online==3">
+            and lastd.car_status=0
+        </if>
+        /*地图查找*/
+        /*省级*/
+        <if test="query.mapAreaCode1 != null and query.mapAreaCode1 != ''">
+            and mapinfo.map_area_code1 =#{query.mapAreaCode1}
+        </if>
+        /*市级*/
+        <if test="query.mapAreaCode2 != null and query.mapAreaCode2 != ''">
+            and mapinfo.map_area_code2 =#{query.mapAreaCode2}
+        </if>
+        /*区级*/
+        <if test="query.mapAreaCode3 != null and query.mapAreaCode3 != ''">
+            and mapinfo.map_area_code3 =#{query.mapAreaCode3}
+        </if>
+        order by car.create_time desc
+    </select>
+
+    <select id="exportLocationInfo" resultMap="monitoringVO">
+        SELECT
+        etp.etp_name,
+        car.lic_code,
+        carDev.device_sn,
+        lastd.gps_time,
+        lastd.online,
+        lastd.speed,
+        lastd.direction,
+        lastd.lat,
+        lastd.lng,
+        lastd.update_time
+        FROM
+        car_info car
+        INNER JOIN car_device carDev ON carDev.car_id = car.id
+        INNER JOIN etp_info etp ON etp.id = car.etp_id
+        LEFT JOIN device_last_data lastd ON lastd.device_sn = carDev.device_sn
+        where car.del_flag=0
+        <if test="query != null">
+        <if test="query.etpId !=null and query.etpId != -1">
+            and car.etp_id=#{query.etpId}
+        </if>
+        <if test="query.carId !=null">
+            and car.id=#{query.carId}
+        </if>
+        <if test="query.licCode !=null and query.licCode !=''">
+            and car.lic_code like concat('%',#{query.licCode},'%')
+        </if>
+        <if test="query.deptId !=null">
+            and car.dept_id=#{query.deptId}
+        </if>
+        /*上线，离线*/
+        <if test="query.online !=null and (query.online==0 or query.online==1)">
+            and  ( CASE WHEN lastd.online = 0 or lastd.online is null   THEN 0    ELSE 1 END )=#{query.online}
+        </if>
+        /*运行*/
+        <if test="query.online !=null and query.online==2">
+            and lastd.car_status=1 or lastd.car_status=2
+        </if>
+        /*静止*/
+        <if test="query.online !=null and query.online==3">
+            and lastd.car_status=0
+        </if>
+        </if>
+        order by car.create_time desc
+    </select>
+    <select id="getAlarmDataByEtpId" resultType="com.htstar.ovms.device.api.entity.DeviceAlarm">
+      SELECT ala.alarm_type AS  alarmType,
+        COUNT(1) AS alarmCount FROM device_alarm ala WHERE device_sn IN
+        (SELECT dev.`device_sn` FROM  car_device dev  LEFT JOIN car_info  car
+        ON car.`id`=dev.`car_id` AND car.`etp_id`=#{etpId})
+        AND ala.`sta_time`>=#{date} AND ala.`is_del`=0 GROUP BY ala.`alarm_type`
+    </select>
+    <select id="findList" resultType="com.htstar.ovms.device.api.vo.AreaVo">
+       SELECT
+            a.area_code AS "areaCode",
+            a.area_name AS "areaName",
+            a.area_type AS "areaType"
+        FROM
+            driver_map_sys_area a
+        WHERE
+            a.status = 0
+<!--        <if test="area.areaCode == null and area.areaCode == '' ">-->
+<!--            AND a.parent_code = 0-->
+<!--        </if>-->
+<!--        <if test="area.areaType == null and area.areaType == '' ">-->
+<!--            AND a.area_type = 1-->
+<!--        </if>-->
+        <if test="area.areaCode != null and area.areaCode != '' ">
+            AND a.parent_code = #{area.areaCode}
+        </if>
+<!--        <if test="area.areaType != null and area.areaType != '' ">-->
+<!--            AND a.area_type = #{area.areaType}-->
+<!--        </if>-->
+        AND a.area_type = #{area.areaType}
+        ORDER BY
+            a.tree_sorts,
+            a.area_code
+    </select>
+
+    <resultMap id="findListsMap" type="com.htstar.ovms.device.api.vo.AreaListVo">
+        <result property="areaCode" column="areaCode1" ></result>
+        <result property="areaName" column="areaName1" ></result>
+        <result property="areaType" column="areaType1" ></result>
+        <collection property="areaListVos" javaType="java.util.List" ofType="com.htstar.ovms.device.api.vo.AreaListVo">
+            <result property="areaCode" column="areaCode2" ></result>
+            <result property="areaName" column="areaName2" ></result>
+            <result property="areaType" column="areaType2" ></result>
+                <collection property="areaListVos" javaType="java.util.List" ofType="com.htstar.ovms.device.api.vo.AreaListVo">
+                    <result property="areaCode" column="areaCode3" ></result>
+                    <result property="areaName" column="areaName3" ></result>
+                    <result property="areaType" column="areaType3" ></result>
+                </collection>
+        </collection>
+    </resultMap>
+
+    <select id="findLists" resultMap="findListsMap">
+SELECT
+	a.area_name AS areaName1,
+	b.area_name AS areaName2,
+	c.area_name AS areaName3,
+	a.area_code AS areaCode1,
+	b.area_code AS areaCode2,
+	c.area_code AS areaCode3,
+	a.area_type AS areaType1,
+	b.area_type AS areaType2,
+	c.area_type AS areaType3
+FROM
+	`driver_map_sys_area` a
+	INNER JOIN driver_map_sys_area b ON b.parent_code = a.area_code
+	INNER JOIN driver_map_sys_area c ON c.parent_code = b.area_code
+	UNION
+ SELECT
+	a.area_name AS areaName1,
+	b.area_name AS areaName2,
+	case a.area_name when  "香港特别行政区" OR "香港特别行政区" then NULL else a.area_name end AS areaName3,
+	a.area_code AS areaCode1,
+	b.area_code AS areaCode2,
+	case a.area_code when  "810000"  then NULL when  "820000"  then NULL else a.area_code end AS areaCode3,
+	a.area_type AS areaType1,
+	b.area_type AS areaType2,
+	case a.area_type when  "1" OR "1" then NULL else a.area_type end AS areaType3
+FROM
+	`driver_map_sys_area` a
+	right JOIN driver_map_sys_area b ON b.parent_code = a.area_code
+  WHERE a.area_name ="香港特别行政区" or a.area_name = "澳门特别行政区"
+	UNION
+	 SELECT
+	a.area_name AS areaName1,
+	case a.area_name when  "台湾省" OR "台湾省" then NULL else a.area_name end AS areaName2,
+	case a.area_name when  "台湾省" OR "台湾省" then NULL else a.area_name end AS areaName3,
+	a.area_code AS areaCode1,
+	case a.area_code when  "710000"  then NULL  else a.area_code end AS areaCode2,
+	case a.area_code when  "710000"  then NULL  else a.area_code end AS areaCode3,
+	a.area_type AS areaType1,
+	case a.area_type when  "1" OR "1" then NULL else a.area_type end AS areaType2,
+  case a.area_type when  "1" OR "1" then NULL else a.area_type end AS areaType3
+FROM
+	`driver_map_sys_area` a
+	where a.area_name ="台湾省"
+    </select>
+    <select id="getFenceCount" resultType="java.lang.Integer">
+         SELECT IFNULL(COUNT(1),0) FROM car_fence_remind  re
+         LEFT JOIN car_info car ON re.car_id=car.id
+         WHERE car.etp_id=#{etpId} and re.create_time>=#{date}
+    </select>
+
+</mapper>

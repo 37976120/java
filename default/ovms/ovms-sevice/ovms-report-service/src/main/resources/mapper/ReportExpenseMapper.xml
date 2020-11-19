@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.report.mapper.ReportExpenseMapper">
+
+    <resultMap id="reportExpenseMap" type="com.htstar.ovms.report.api.entity.ReportExpense">
+        <result property="monthShort" column="month_short"/>
+        <result property="etpId" column="etp_id"/>
+        <result property="carId" column="car_id"/>
+        <result property="fuelCost" column="fuel_cost"/>
+        <result property="etcCost" column="etc_cost"/>
+        <result property="insCost" column="ins_cost"/>
+        <result property="maiCost" column="mai_cost"/>
+        <result property="motCost" column="mot_cost"/>
+        <result property="repairCost" column="repair_cost"/>
+        <result property="stopCost" column="stop_cost"/>
+        <result property="washCost" column="wash_cost"/>
+        <result property="ticketCost" column="ticket_cost"/>
+        <result property="suppliesCost" column="supplies_cost"/>
+        <result property="otherCost" column="other_cost"/>
+    </resultMap>
+    <sql id="clums">
+    month_short,
+    etp_id,
+    car_id,
+    lic_code,
+    fuel_cost,
+    etc_cost,
+    ins_cost,
+    mai_cost,
+    mot_cost,
+    repair_cost,
+    stop_cost,
+    wash_cost,
+    ticket_cost,
+    supplies_cost,
+    other_cost,
+  </sql>
+    <!--按月统计费用总费用-->
+    <select id="getTotalCostByMonth" resultType="com.htstar.ovms.report.api.entity.ReportExpense">
+        SELECT
+         ifnull(SUM(fuel_cost),0) AS fuel_cost,
+        ifnull(SUM(etc_cost),0) AS etc_cost,
+        ifnull(SUM(ins_cost),0) AS ins_cost,
+        ifnull(SUM(mai_cost),0) AS mai_cost,
+        ifnull(SUM(mot_cost),0)AS mot_cost,
+        ifnull(SUM(repair_cost),0)AS repair_cost,
+        ifnull(SUM(stop_cost),0) AS stop_cost ,
+        ifnull(SUM(wash_cost),0) AS wash_cost ,
+        ifnull(SUM(ticket_cost),0) AS ticket_cost,
+        ifnull(SUM(supplies_cost),0) AS supplies_cost ,
+        ifnull(SUM(other_cost),0) AS other_cost
+        FROM report_expense re
+        left join car_info car on car.id=re.car_id
+        where re.etp_id=#{req.etpId}
+        <if test="req.year !=null and req.year!=''">
+            AND month_short like concat(#{req.year},'%')
+        </if>
+        <if test="req.licCode!=null and req.licCode!='' ">
+            AND car.lic_code like concat('%',#{req.licCode},'%')
+        </if>
+    </select>
+    <!--按月统计费用表格-->
+    <select id="getCostTableByMonth" resultType="com.htstar.ovms.report.api.entity.ReportExpense">
+        SELECT mon.month_short as monthValue,
+        IFNULL(m.fuel_cost,0) AS fuelCost,
+        IFNULL(m.etc_cost,0) AS etcCost,
+        IFNULL(m.ins_cost,0)AS insCost,
+        IFNULL(m.mai_cost,0)AS maiCost ,
+        IFNULL(m.mot_cost,0)AS motCost,
+        IFNULL(m.repair_cost,0)AS repairCost,
+        IFNULL(m.stop_cost,0) AS stopCost,
+        IFNULL(m.wash_cost,0)AS washCost,
+        IFNULL(m.ticket_cost,0)AS ticketCost,
+        IFNULL(m.supplies_cost,0)AS suppliesCost,
+        IFNULL(m.other_cost,0)AS otherCost
+        FROM
+        (SELECT
+        month_short
+        FROM
+        report_day
+        WHERE
+        <if test="req.year !=null and req.year!=''">
+           month_short like concat(#{req.year},'%')
+        </if>
+        GROUP BY month_short) AS mon
+        LEFT JOIN
+        (SELECT
+        DATE_FORMAT(month_short,'%Y-%m')  AS mo,
+        SUM(fuel_cost) AS fuel_cost,
+        SUM(etc_cost) AS etc_cost,
+        SUM(ins_cost) AS ins_cost,
+        SUM(mai_cost) AS mai_cost,
+        SUM(mot_cost) AS mot_cost,
+        SUM(repair_cost) AS repair_cost,
+        SUM(stop_cost) AS stop_cost,
+        SUM(wash_cost) AS wash_cost,
+        SUM(ticket_cost) AS ticket_cost,
+        SUM(supplies_cost) AS supplies_cost,
+        SUM(other_cost) AS other_cost
+        FROM
+        report_expense re
+        LEFT JOIN car_info car ON re.`car_id`=car.`id`
+        WHERE re.etp_id=#{req.etpId}
+        <if test="req.year !=null and req.year!=''">
+            AND month_short like concat(#{req.year},'%')
+        </if>
+        <if test="req.licCode!=null and req.licCode!='' ">
+            and car.lic_code like concat('%',#{req.licCode},'%')
+        </if>
+        GROUP BY DATE_FORMAT(month_short,'%Y-%m') ) AS m
+        ON m.mo =mon.month_short
+    </select>
+    <!--按车统计费用总费用-->
+    <select id="getTotalCostByCar" resultType="com.htstar.ovms.report.api.entity.ReportExpense">
+        SELECT IFNULL(SUM(fuel_cost),0) AS fuel_cost,ifnull(SUM(etc_cost),0) AS etc_cost ,ifnull(SUM(ins_cost),0) AS ins_cost
+        ,ifnull(SUM(mai_cost),0) AS mai_cost
+        ,ifnull(SUM(mot_cost),0)AS mot_cost ,ifnull(SUM(repair_cost),0)AS repair_cost
+        ,ifnull(SUM(stop_cost),0) AS stop_cost ,ifnull(SUM(wash_cost),0) AS wash_cost ,ifnull(SUM(ticket_cost),0) AS ticket_cost
+        ,ifnull(SUM(supplies_cost),0) AS supplies_cost ,ifnull(SUM(other_cost),0) AS other_cost FROM report_expense
+        where etp_id=#{etpId} and month_short like CONCAT(#{monthShort},'%')
+    </select>
+    <!--按车统计分页分页-->
+    <select id="getCostPageByCar" resultType="com.htstar.ovms.report.api.entity.ReportExpense">
+        SELECT car.lic_code as licCode ,SUM(fuel_cost) AS fuel_cost,SUM(etc_cost) AS etc_cost ,SUM(ins_cost) AS ins_cost ,SUM(mai_cost) AS
+        mai_cost
+        ,SUM(mot_cost)AS mot_cost ,SUM(repair_cost)AS repair_cost
+        ,SUM(stop_cost) AS stop_cost ,SUM(wash_cost) AS wash_cost ,SUM(ticket_cost) AS ticket_cost
+        ,SUM(supplies_cost) AS supplies_cost ,SUM(other_cost) AS other_cost
+        FROM report_expense re  left join car_info car on car.id=re.car_id
+        where re.etp_id=#{req.etpId} and month_short like CONCAT (#{req.monthShort},'%')
+        group by car_id
+    </select>
+</mapper>

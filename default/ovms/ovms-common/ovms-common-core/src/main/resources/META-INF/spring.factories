@@ -1,0 +1,5 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.htstar.ovms.common.core.config.JacksonConfig,\
+  com.htstar.ovms.common.core.config.MessageSourceConfig,\
+  com.htstar.ovms.common.core.config.RestTemplateConfig,\
+  com.htstar.ovms.common.core.util.SpringContextHolder

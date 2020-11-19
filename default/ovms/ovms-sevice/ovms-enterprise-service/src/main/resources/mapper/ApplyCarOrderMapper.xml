@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.ApplyOfficeCarEventMapper">
+
+<resultMap id="applyOfficeCarEventMap" type="com.htstar.ovms.enterprise.api.entity.ApplyCarOrder">
+    <id property="orderId" column="order_id"/>
+    <result property="etpId" column="etp_id"/>
+    <result property="applyUserId" column="apply_user_id"/>
+    <result property="processId" column="process_id"/>
+    <result property="applyType" column="apply_type"/>
+    <result property="lastRecordId" column="last_record_id"/>
+    <result property="carLevel" column="car_level"/>
+    <result property="nowNodeType" column="now_node_type"/>
+    <result property="nextNodeType" column="next_node_type"/>
+    <result property="driveType" column="drive_type"/>
+    <result property="passengers" column="passengers"/>
+    <result property="staTime" column="sta_time"/>
+    <result property="endTime" column="end_time"/>
+    <result property="applyReason" column="apply_reason"/>
+    <result property="createTime" column="create_time"/>
+    <result property="carId" column="car_id"/>
+    <result property="driverId" column="driver_id"/>
+    <result property="verifyUserList" column="verify_user_list"/>
+    <result property="processStatus" column="process_status"/>
+</resultMap>
+
+    <sql id="page">
+      DISTINCT o.`order_id`,
+      if(
+        (select
+        task_type
+        from
+        `apply_order_task`
+        where order_id = o.order_id
+        and task_type in (1, 2)
+        AND del_flag = 0
+        and verify_type = 1
+        <if test="userId != null">
+            and verify_user_id = ${userId}
+        </if>
+        order by task_type asc
+        limit 1) = 1,
+        1,
+        if(
+        (select
+        count(1)
+        from
+        `apply_order_task` mk
+        left join sys_user_role mr
+        on mk.verify_role_id = mr.role_id
+        WHERE mk.order_id = o.order_id
+        AND mk.task_type = 1
+        AND mk.del_flag = 0
+        AND mk.verify_type = 2
+        <if test="userId != null">
+            and mr.user_id = ${userId}
+        </if>
+        ) >= 1,
+        1,
+        2
+        )
+        ) task_type,
+      o.process_status,
+      o.car_id,
+      u.`username`,
+      u.phone,
+      o.driver_id,
+      o.passengers,
+      u.`nick_name` apply_user_nick_name,
+      u.dept_id,
+      de.`name` dept_name,
+      o.`sta_time`,
+      o.`end_time`,
+      o.`drive_type`,
+      d.give_car_status,
+      p.mileage_status,
+      d.retuen_car_status,
+      IF(
+        o.apply_type = 1,
+        d.car_number,
+        c.lic_code
+        ) car_number,
+      o.`apply_type`,
+      o.`create_time`,
+      o.`apply_user_id`,
+      o.now_node_type,
+      o.`apply_reason`,
+      o.`process_id`,
+      o.`next_node_type`,
+      d.sta_addr,
+      o.car_level,
+      d.`end_addr_list`,
+      r.operation_type
+    </sql>
+
+    <select id="getPageTask" resultType="com.htstar.ovms.enterprise.api.vo.ApplyOrderPageVO">
+        SELECT * FROM (
+        SELECT
+        <include refid="page"/>
+        FROM
+        (SELECT
+            *
+        FROM `apply_order_task`
+        WHERE `del_flag` = 0
+            <if test="userId != null">
+                AND `verify_user_id` = #{userId}
+            </if>
+            <if test="taskType != null and taskType != ''">
+                and task_type in(${taskType})
+            </if>
+            <if test="readFalg != null">
+                and read_falg = #{readFalg}
+            </if>
+            AND verify_type = 1
+        UNION
+        SELECT
+            tt.*
+        FROM `apply_order_task` tt
+            LEFT JOIN `sys_user_role` rr
+            ON tt.verify_role_id = rr.role_id
+        WHERE `del_flag` = 0
+            AND verify_type = 2
+            <if test="userId != null">
+                AND rr.user_id = #{userId}
+            </if>
+            <if test="taskType != null and taskType != ''">
+                and tt.task_type in(${taskType})
+            </if>
+            <if test="readFalg != null">
+                and tt.read_falg = #{readFalg}
+            </if>
+        ) t
+        LEFT JOIN `apply_car_order` o
+        ON t.`order_id` = o.`order_id`
+        LEFT JOIN `car_info` c
+        ON o.`car_id` = c.`id`
+        LEFT JOIN sys_user u
+        ON o.`apply_user_id` = u.`user_id`
+        LEFT JOIN sys_dept de
+        ON u.`dept_id` = de.`dept_id`
+        LEFT JOIN `apply_car_order_detail` d
+        ON o.`order_id` = d.`order_id`
+        LEFT JOIN `apply_process_record` r
+        ON o.`last_record_id` = r.`id`
+        LEFT JOIN `apply_car_process` p
+        ON o.`process_id` = p.`id`
+        WHERE o.`etp_id` = #{etpId}
+            <if test="orderId != null">
+                and o.order_id = #{orderId}
+            </if>
+            <if test="applyType != null">
+                and o.apply_type = #{applyType}
+            </if>
+            <if test="nickName != null">
+                and u.nick_name like concat('%',#{nickName},'%')
+            </if>
+            <if test="deptId != null">
+                and u.dept_id = #{deptId}
+            </if>
+            <if test="staTime != null">
+                and o.sta_time &gt;= #{staTime}
+            </if>
+            <if test="endTime != null">
+                and o.end_time &lt;= #{endTime}
+            </if>
+            <if test="carId != null">
+                and o.car_id = #{carId}
+            </if>
+            <if test="carNumber != null and carNumber != ''">
+                and c.lic_code like concat('%',#{carNumber},'%')
+            </if>
+            <if test="nowNodeType != null">
+                and o.now_node_type = #{nowNodeType}
+            </if>
+            <if test="nextNodeType != null">
+                and o.next_node_type = #{nextNodeType}
+            </if>
+            <if test="operationType != null">
+                and r.operation_type = #{operationType}
+            </if>
+            <if test="processStatus != null  and processStatus != ''">
+                and o.process_status in ( ${processStatus})
+            </if> ) t
+        ORDER BY task_type ASC
+    </select>
+    <select id="getApplyCarCount" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM apply_car_order AS app
+        LEFT JOIN car_info AS car ON app.car_id =car.`id`
+         WHERE car.`del_flag`=0 and app.process_status=14
+        AND app.etp_id=#{etpId} AND  app.sta_time &gt;=#{date} AND app.car_id>0 GROUP BY app.car_id
+
+    </select>
+    <select id="getUserNinckName" resultType="java.lang.String">
+        select nick_name from sys_user where user_id = #{driverId} limit 1
+    </select>
+</mapper>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.htstar.ovms.msg.mapper.MsgPushUserCidMapper">
+
+
+    <select id="getMagPushUserCidByUserId" resultType="com.htstar.ovms.msg.api.vo.MsgPushUserCidVO">
+        SELECT msg.cid as cid , user.username
+        FROM `msg_push_user_cid` msg
+        left join sys_user user on user.user_id = msg.user_id
+        <where>
+            <if test="cid != null and cid != ''">
+             msg.cid = #{cid}
+            </if>
+            <if test="userId != null and userId != ''">
+              and msg.user_id = #{userId}
+            </if>
+        </where>
+    </select>
+    <select id="selectByDeptIdUser" resultType="com.htstar.ovms.msg.api.vo.MsgUserEtpIdVO">
+SELECT
+	etp.etp_name AS etpName,
+	USER.username,
+	USER.user_id AS userId
+FROM
+	etp_info etp
+	LEFT JOIN sys_user USER ON USER.etp_id = etp.id
+	LEFT JOIN msg_push_user_cid msg ON msg.user_id = USER.user_id
+WHERE
+	etp.id = #{etpId}
+    </select>
+    <select id="selectByUserId" resultType="com.htstar.ovms.msg.api.entity.MsgPushUserCid">
+        	select cid from msg_push_user_cid where user_id=#{userId}
+    </select>
+
+    <update id="updateMagPushUserCidByUserId">
+        update `msg_push_user_cid`
+        <set>
+            <if test="cid != null and cid != ''">
+                cid = #{cid} , update_time = NOW()
+            </if>
+        </set>
+        <where>
+            <if test="userId != null and userId != ''">
+                user_id = #{userId}
+            </if>
+        </where>
+    </update>
+</mapper>

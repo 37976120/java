@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<parent>
+		<artifactId>ovms-sevice</artifactId>
+		<groupId>com.htstar</groupId>
+		<version>3.8.0</version>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>ovms-platform-service</artifactId>
+	<packaging>jar</packaging>
+
+	<description>ovms 通用用户权限管理系统业务处理模块</description>
+
+	<dependencies>
+		<!--upms api、protoco 模块-->
+		<dependency>
+			<groupId>com.htstar</groupId>
+			<artifactId>ovms-platform-client</artifactId>
+			<version>3.8.0</version>
+		</dependency>
+		<!--日志处理-->
+		<dependency>
+			<groupId>com.htstar</groupId>
+			<artifactId>ovms-common-log</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.htstar</groupId>
+			<artifactId>ovms-common-data</artifactId>
+		</dependency>
+		<!--swagger-->
+		<dependency>
+			<groupId>com.htstar</groupId>
+			<artifactId>ovms-common-swagger</artifactId>
+		</dependency>
+		<!--文件系统-->
+		<dependency>
+			<groupId>com.htstar</groupId>
+			<artifactId>ovms-common-minio</artifactId>
+		</dependency>
+		<!--注册中心客户端-->
+		<dependency>
+			<groupId>com.alibaba.cloud</groupId>
+			<artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+		</dependency>
+		<!--配置中心客户端-->
+		<dependency>
+			<groupId>com.alibaba.cloud</groupId>
+			<artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+		</dependency>
+		<!--spring security 、oauth、jwt依赖-->
+		<dependency>
+			<groupId>com.htstar</groupId>
+			<artifactId>ovms-common-security</artifactId>
+		</dependency>
+		<!--支持动态路由配置 -->
+		<dependency>
+			<groupId>com.htstar</groupId>
+			<artifactId>ovms-common-gateway</artifactId>
+		</dependency>
+		<!--sentinel 依赖-->
+		<dependency>
+			<groupId>com.htstar</groupId>
+			<artifactId>ovms-common-sentinel</artifactId>
+		</dependency>
+		<!--路由控制-->
+		<dependency>
+			<groupId>com.htstar</groupId>
+			<artifactId>ovms-common-gray</artifactId>
+		</dependency>
+		<!--mybatis-->
+		<dependency>
+			<groupId>com.baomidou</groupId>
+			<artifactId>mybatis-plus-boot-starter</artifactId>
+		</dependency>
+		<!-- druid 连接池 -->
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>druid-spring-boot-starter</artifactId>
+		</dependency>
+		<!--数据库-->
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+		</dependency>
+		<!--web 模块-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<!--undertow容器-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-undertow</artifactId>
+		</dependency>
+
+		<!--阿里云短信-->
+        <dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>aliyun-java-sdk-dysmsapi</artifactId>
+            <version>1.1.0</version>
+        </dependency>
+		<dependency>
+			<groupId>com.aliyun</groupId>
+			<artifactId>aliyun-java-sdk-core</artifactId>
+			<version>4.4.1</version>
+		</dependency>
+        <dependency>
+            <groupId>com.htstar</groupId>
+            <artifactId>ovms-enterprise-client</artifactId>
+            <version>3.8.0</version>
+            <scope>compile</scope>
+        </dependency>
+
+		<dependency>
+			<groupId>org.freemarker</groupId>
+			<artifactId>freemarker</artifactId>
+			<version>2.3.30</version>
+		</dependency>
+
+		<dependency>
+			<groupId>cn.smallbun.screw</groupId>
+			<artifactId>screw-core</artifactId>
+			<version>1.0.2</version>
+		</dependency>
+        <dependency>
+            <groupId>com.htstar</groupId>
+            <artifactId>ovms-common-minio</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.htstar</groupId>
+            <artifactId>ovms-msg-client</artifactId>
+            <version>3.8.0</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>io.fabric8</groupId>
+				<artifactId>docker-maven-plugin</artifactId>
+			</plugin>
+<!--			<plugin>-->
+<!--				<groupId>cn.smallbun.screw</groupId>-->
+<!--				<artifactId>screw-maven-plugin</artifactId>-->
+<!--				<version>1.0.2</version>-->
+<!--				<dependencies>-->
+<!--					&lt;!&ndash; HikariCP &ndash;&gt;-->
+<!--					<dependency>-->
+<!--						<groupId>com.zaxxer</groupId>-->
+<!--						<artifactId>HikariCP</artifactId>-->
+<!--						<version>3.4.5</version>-->
+<!--					</dependency>-->
+<!--					&lt;!&ndash;mysql driver&ndash;&gt;-->
+<!--					<dependency>-->
+<!--						<groupId>mysql</groupId>-->
+<!--						<artifactId>mysql-connector-java</artifactId>-->
+<!--						<version>8.0.20</version>-->
+<!--					</dependency>-->
+<!--				</dependencies>-->
+<!--				<configuration>-->
+<!--					&lt;!&ndash;username&ndash;&gt;-->
+<!--					<username>root</username>-->
+<!--					&lt;!&ndash;password&ndash;&gt;-->
+<!--					<password>Beanmr@0521</password>-->
+<!--					&lt;!&ndash;driver&ndash;&gt;-->
+<!--					<driverClassName>com.mysql.cj.jdbc.Driver</driverClassName>-->
+<!--					&lt;!&ndash;jdbc url&ndash;&gt;-->
+<!--					<jdbcUrl>jdbc:mysql://172.18.1.217:3306/ovmsx</jdbcUrl>-->
+<!--					&lt;!&ndash;生成文件类型&ndash;&gt;-->
+<!--					<fileType>HTML</fileType>-->
+<!--					&lt;!&ndash;文件输出目录&ndash;&gt;-->
+<!--					<fileOutputDir>/ovmsdatebase</fileOutputDir>-->
+<!--					&lt;!&ndash;打开文件输出目录&ndash;&gt;-->
+<!--					<openOutputDir>false</openOutputDir>-->
+<!--					&lt;!&ndash;生成模板&ndash;&gt;-->
+<!--					<produceType>freemarker</produceType>-->
+<!--					&lt;!&ndash;描述&ndash;&gt;-->
+<!--					<description>数据库文档生成</description>-->
+<!--					&lt;!&ndash;版本&ndash;&gt;-->
+<!--					<version>${project.version}</version>-->
+<!--					&lt;!&ndash;标题&ndash;&gt;-->
+<!--					<title>数据库文档</title>-->
+<!--				</configuration>-->
+<!--				<executions>-->
+<!--					<execution>-->
+<!--						<phase>compile</phase>-->
+<!--						<goals>-->
+<!--							<goal>run</goal>-->
+<!--						</goals>-->
+<!--					</execution>-->
+<!--				</executions>-->
+<!--			</plugin>-->
+		</plugins>
+	</build>
+
+</project>

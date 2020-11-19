@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.job.mapper.UserApplyJoinExpireMapper">
+    <update id="expireUserApplyJoinByDate">
+        UPDATE sys_user_apply SET apply_status = 1 WHERE apply_status = 0 AND create_time &lt; #{now} -INTERVAL 3 DAY;
+    </update>
+</mapper>
