@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.job.mapper.ExpenseMapper">
+    <!--获取所有有效车辆id-->
+    <select id="getCarIds" resultType="java.lang.Integer">
+        SELECT id FROM  car_info WHERE del_flag=0
+    </select>
+    <!--加油数据-->
+    <update id="saveFuelCost">
+        INSERT INTO report_expense(month_short,etp_id,lic_code,car_id,fuel_cost)
+        SELECT DATE_FORMAT(#{startTime},'%Y-%m')AS month_short,car.`etp_id`,car.`lic_code`,item.car_id,item.fuel_cost FROM
+        (SELECT car_id,SUM(fuel_money) AS fuel_cost
+        FROM car_fuel_item
+        WHERE del_flag=0
+        AND fuel_time &gt;=#{startTime}
+        AND fuel_time&lt;=#{endTime}
+        AND car_id IN
+        <foreach item="id" collection="list" index="index" open="(" separator=","
+                 close=")">
+            #{id}
+        </foreach>
+        GROUP BY car_id)
+        AS item
+        LEFT JOIN car_info AS car ON item.`car_id`=car.`id`
+        ON DUPLICATE KEY UPDATE fuel_cost=VALUES(fuel_cost)
+    </update>
+    <!--etc费用数据-->
+    <update id="saveEtcCost">
+        INSERT INTO report_expense(month_short,etp_id,lic_code,car_id,etc_cost)
+        SELECT DATE_FORMAT(#{startTime},'%Y-%m')AS month_short,car.`etp_id`,car.`lic_code`,item.car_id,item.etc_cost FROM
+        (SELECT car_id,SUM(etc_money) AS etc_cost
+        FROM car_etc_item
+        WHERE del_flag=0
+        AND item_time &gt;=#{startTime}
+        AND item_time&lt;=#{endTime}
+        AND car_id IN
+        <foreach item="id" collection="list" index="index" open="(" separator=","
+                 close=")">
+            #{id}
+        </foreach>
+        GROUP BY car_id)
+        AS item
+        LEFT JOIN car_info AS car ON item.`car_id`=car.`id`
+        ON DUPLICATE KEY UPDATE etc_cost=VALUES(etc_cost)
+    </update>
+    <!--保险费用-->
+    <update id="saveInsCost">
+        INSERT INTO report_expense(month_short,etp_id,lic_code,car_id,ins_cost)
+        SELECT DATE_FORMAT(#{startTime},'%Y-%m')AS month_short,car.`etp_id`,car.`lic_code`,item.car_id,item.ins_cost FROM
+        (SELECT car_id,SUM(ins_money) AS ins_cost
+        FROM car_ins_item
+        WHERE del_flag=0
+        AND create_time &gt;=#{startTime}
+        AND create_time&lt;=#{endTime}
+        AND car_id IN
+        <foreach item="id" collection="list" index="index" open="(" separator=","
+                 close=")">
+            #{id}
+        </foreach>
+        GROUP BY car_id)
+        AS item
+        LEFT JOIN car_info AS car ON item.`car_id`=car.`id`
+        ON DUPLICATE KEY UPDATE ins_cost=VALUES(ins_cost)
+    </update>
+    <!--保养费用-->
+    <update id="saveMaiCost">
+        INSERT INTO report_expense(month_short,etp_id,lic_code,car_id,mai_cost)
+        SELECT DATE_FORMAT(#{startTime},'%Y-%m')AS month_short,car.`etp_id`,car.`lic_code`,item.car_id,item.mai_cost FROM
+        (SELECT car_id,SUM(mai_money) AS mai_cost
+        FROM car_mai_item
+        WHERE del_flag=0
+        AND mai_time &gt;=#{startTime}
+        AND mai_time&lt;=#{endTime}
+        AND car_id IN
+        <foreach item="id" collection="list" index="index" open="(" separator=","
+                 close=")">
+            #{id}
+        </foreach>
+        GROUP BY car_id)
+        AS item
+        LEFT JOIN car_info AS car ON item.`car_id`=car.`id`
+        ON DUPLICATE KEY UPDATE mai_cost=VALUES(mai_cost)
+    </update>
+    <update id="saveMotCost">
+        INSERT INTO report_expense(month_short,etp_id,lic_code,car_id,mot_cost)
+        SELECT DATE_FORMAT(#{startTime},'%Y-%m')AS month_short,car.`etp_id`,car.`lic_code`,item.car_id,item.mot_cost FROM
+        (SELECT car_id,SUM(mot_money) AS mot_cost
+        FROM car_mot_item
+        WHERE del_flag=0
+        AND mot_time &gt;=#{startTime}
+        AND mot_time&lt;=#{endTime}
+        AND car_id IN
+        <foreach item="id" collection="list" index="index" open="(" separator=","
+                 close=")">
+            #{id}
+        </foreach>
+        GROUP BY car_id)
+        AS item
+        LEFT JOIN car_info AS car ON item.`car_id`=car.`id`
+        ON DUPLICATE KEY UPDATE mot_cost=VALUES(mot_cost)
+    </update>
+    <update id="saveRepairCost">
+        INSERT INTO report_expense(month_short,etp_id,lic_code,car_id,repair_cost)
+        SELECT DATE_FORMAT(#{startTime},'%Y-%m')AS month_short,car.`etp_id`,car.`lic_code`,item.car_id,item.repair_cost FROM
+        (SELECT car_id,SUM(rep_money) AS repair_cost
+        FROM car_repair_item
+        WHERE del_flag=0
+        AND rep_time &gt;=#{startTime}
+        AND rep_time&lt;=#{endTime}
+        AND car_id IN
+        <foreach item="id" collection="list" index="index" open="(" separator=","
+                 close=")">
+            #{id}
+        </foreach>
+        GROUP BY car_id)
+        AS item
+        LEFT JOIN car_info AS car ON item.`car_id`=car.`id`
+        ON DUPLICATE KEY UPDATE repair_cost=VALUES(repair_cost)
+    </update>
+    <!--停车费-->
+    <update id="saveStopCost">
+        INSERT INTO report_expense(month_short,etp_id,lic_code,car_id,stop_cost)
+        SELECT DATE_FORMAT(#{startTime},'%Y-%m')AS month_short,car.`etp_id`,car.`lic_code`,item.car_id,item.stop_cost FROM
+        (SELECT car_id,SUM(item_money) AS stop_cost
+        FROM car_other_item
+        WHERE del_flag=0
+        AND item_type=1
+        AND item_time &gt;=#{startTime}
+        AND item_time&lt;=#{endTime}
+        AND car_id IN
+        <foreach item="id" collection="list" index="index" open="(" separator=","
+                 close=")">
+            #{id}
+        </foreach>
+        GROUP BY car_id)
+        AS item
+        LEFT JOIN car_info AS car ON item.`car_id`=car.`id`
+        ON DUPLICATE KEY UPDATE stop_cost=VALUES(stop_cost)
+    </update>
+    <!--洗车费-->
+    <update id="saveWashCost">
+        INSERT INTO report_expense(month_short,etp_id,lic_code,car_id,wash_cost)
+        SELECT DATE_FORMAT(#{startTime},'%Y-%m')AS month_short,car.`etp_id`,car.`lic_code`,item.car_id,item.wash_cost FROM
+        (SELECT car_id,SUM(item_money) AS wash_cost
+        FROM car_other_item
+        WHERE del_flag=0
+        AND item_type=3
+        AND item_time &gt;=#{startTime}
+        AND item_time&lt;=#{endTime}
+        AND car_id IN
+        <foreach item="id" collection="list" index="index" open="(" separator=","
+                 close=")">
+            #{id}
+        </foreach>
+        GROUP BY car_id)
+        AS item
+        LEFT JOIN car_info AS car ON item.`car_id`=car.`id`
+        ON DUPLICATE KEY UPDATE wash_cost=VALUES(wash_cost)
+    </update>
+    <!--罚单费-->
+    <update id="saveTicketCost">
+        INSERT INTO report_expense(month_short,etp_id,lic_code,car_id,ticket_cost)
+        SELECT DATE_FORMAT(#{startTime},'%Y-%m')AS month_short,car.`etp_id`,car.`lic_code`,item.car_id,item.ticket_cost FROM
+        (SELECT car_id,SUM(item_money) AS ticket_cost
+        FROM car_other_item
+        WHERE del_flag=0
+        AND item_type=2
+        AND item_time &gt;=#{startTime}
+        AND item_time&lt;=#{endTime}
+        AND car_id IN
+        <foreach item="id" collection="list" index="index" open="(" separator=","
+                 close=")">
+            #{id}
+        </foreach>
+        GROUP BY car_id)
+        AS item
+        LEFT JOIN car_info AS car ON item.`car_id`=car.`id`
+        ON DUPLICATE KEY UPDATE ticket_cost=VALUES(ticket_cost)
+    </update>
+    <!--汽车用品费用-->
+    <update id="saveSuppliesCost">
+        INSERT INTO report_expense(month_short,etp_id,lic_code,car_id,supplies_cost)
+        SELECT DATE_FORMAT(#{startTime},'%Y-%m')AS month_short,car.`etp_id`,car.`lic_code`,item.car_id,item.supplies_cost FROM
+        (SELECT car_id,SUM(item_money) AS supplies_cost
+        FROM car_other_item
+        WHERE del_flag=0
+        AND item_type=4
+        AND item_time &gt;=#{startTime}
+        AND item_time&lt;=#{endTime}
+        AND car_id IN
+        <foreach item="id" collection="list" index="index" open="(" separator=","
+                 close=")">
+            #{id}
+        </foreach>
+        GROUP BY car_id)
+        AS item
+        LEFT JOIN car_info AS car ON item.`car_id`=car.`id`
+        ON DUPLICATE KEY UPDATE supplies_cost=VALUES(supplies_cost)
+    </update>
+    <!--其他费用-->
+    <update id="saveOtherCost">
+        INSERT INTO report_expense(month_short,etp_id,lic_code,car_id,other_cost)
+        SELECT DATE_FORMAT(#{startTime},'%Y-%m')AS month_short,car.`etp_id`,car.`lic_code`,item.car_id,item.other_cost FROM
+        (SELECT car_id,SUM(item_money) AS other_cost
+        FROM car_other_item
+        WHERE del_flag=0
+        AND item_type=5
+        AND item_time &gt;=#{startTime}
+        AND item_time&lt;=#{endTime}
+        AND car_id IN
+        <foreach item="id" collection="list" index="index" open="(" separator=","
+                 close=")">
+            #{id}
+        </foreach>
+        GROUP BY car_id)
+        AS item
+        LEFT JOIN car_info AS car ON item.`car_id`=car.`id`
+        ON DUPLICATE KEY UPDATE other_cost=VALUES(other_cost)
+    </update>
+
+</mapper>

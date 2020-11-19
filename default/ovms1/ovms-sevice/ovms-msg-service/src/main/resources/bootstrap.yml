@@ -1,0 +1,28 @@
+server:
+  port: 4007
+  tomcat:
+    connection-timeout: 5000
+    max-connections: 2000
+    max-threads: 100
+spring:
+  application:
+    name: @artifactId@
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_HOST:ovms-register}:${NACOS_PORT:8848}
+        metadata:
+          VERSION: FAN
+      config:
+        server-addr: ${spring.cloud.nacos.discovery.server-addr}
+        file-extension: yml
+        shared-configs:
+          - application-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+  autoconfigure:
+    exclude: org.springframework.cloud.gateway.config.GatewayAutoConfiguration,org.springframework.cloud.gateway.config.GatewayClassPathWarningAutoConfiguration
+  profiles:
+    active: @profiles.active@
+  mvc:
+    async:
+      request-timeout: 5000
+

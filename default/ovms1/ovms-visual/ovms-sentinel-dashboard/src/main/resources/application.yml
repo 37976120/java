@@ -1,0 +1,43 @@
+server:
+  port: 5020
+  tomcat:
+    connection-timeout: 5000
+    max-connections: 2000
+    max-threads: 100
+##
+spring:
+  http:
+    encoding:
+      force: true
+  security:
+    user:
+      password: 123456
+      name: ovms
+#  security:
+#    user:
+#      name: ovms
+#      password: 123456
+##超时
+  #spring.mvc.async.request-timeout=15000
+  mvc:
+    async:
+      request-timeout: 5000
+logging:
+  level:
+    org:
+      springframework:
+        web: info
+  file:
+    name: ${user.home}/logs/csp/sentinel-dashboard.log
+  pattern:
+    file: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n'
+
+auth:
+  username: sentinel
+  password: ecadec2924e86bf88d622ceb0855382d
+  filter:
+    exclude-urls: /,/auth/login,/auth/logout,/registry/machine,/version
+    exclude-url-suffixes: htm,html,js,css,map,ico,ttf,woff,png
+sentinel:
+  dashboard:
+    version: 1.7.1

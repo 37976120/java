@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.admin.mapper.SysUserApplyMapper">
+
+<resultMap id="sysUserApplyMap" type="com.htstar.ovms.admin.api.entity.SysUserApply">
+    <id property="id" column="id"/>
+    <result property="username" column="username"/>
+    <result property="password" column="password"/>
+    <result property="salt" column="salt"/>
+    <result property="phone" column="phone"/>
+    <result property="nickName" column="nick_name"/>
+    <result property="deptId" column="dept_id"/>
+    <result property="etpId" column="etp_id"/>
+    <result property="applyStatus" column="apply_status"/>
+    <result property="remark" column="remark"/>
+    <result property="sex" column="sex"/>
+    <result property="driverStatus" column="driver_status"/>
+    <result property="createTime" column="create_time"/>
+    <result property="updateTime" column="update_time"/>
+</resultMap>
+    <select id="getApplyByUsername" resultType="com.htstar.ovms.admin.api.entity.SysUserApply">
+        select * from sys_user_apply where username = #{username}  and apply_status in(0,2) order by id desc limit 1
+    </select>
+    <select id="getSysUserApplyPage" resultType="com.htstar.ovms.admin.api.vo.SysUserApplyVO">
+        select a.*,d.name as dept_name  from sys_user_apply a left join sys_dept d on a.dept_id = d.dept_id where a.etp_id =#{etpId} order by a.id desc
+    </select>
+
+</mapper>

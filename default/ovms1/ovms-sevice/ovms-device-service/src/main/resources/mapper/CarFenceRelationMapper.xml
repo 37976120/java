@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.device.mapper.CarFenceRelationMapper">
+
+    <resultMap id="carFenceRelationMap" type="com.htstar.ovms.device.api.entity.CarFenceRelation">
+        <id property="id" column="id"/>
+        <result property="fenceId" column="fence_id"/>
+        <result property="carId" column="car_id"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <resultMap id="carFenceRelationVO" type="com.htstar.ovms.device.api.vo.CarFenceRelationVO">
+        <id property="id" column="id"/>
+        <result property="carId" column="car_id"/>
+        <result property="licCode" column="lic_code"/>
+        <result property="carSubBrand" column="car_sub_brand"/>
+        <result property="deptName" column="dept_name"/>
+        <result property="remindType" column="remind_type"/>
+        <result property="fenceNum" column="fenceNum"/>
+        <result property="fenceName" column="fence_name"/>
+        <result property="lat" column="lat"/>
+        <result property="lng" column="lng"/>
+    </resultMap>
+
+    <select id="getCarFenceRelationPage" resultMap="carFenceRelationVO">
+    SELECT
+        car.id as car_id,
+        car.lic_code,
+        dept.name as dept_name,
+        cb.car_sub_brand,
+        cf.id
+    FROM
+        car_info car
+        inner JOIN car_fence_relation cf ON car.id = cf.car_id
+        left join sys_dept dept on dept.dept_id = car.dept_id
+        LEFT JOIN car_model model ON car.id = model.car_id
+        LEFT JOIN car_sub_brand cb ON cb.id = model.sub_brand_id
+        <where>
+            <if test="query.fenceId !=null">
+                and cf.fence_id =#{query.fenceId}
+            </if>
+            <if test="query.deptId !=null">
+                and car.dept_id =#{query.deptId}
+            </if>
+            <if test="query.licCode !=null">
+                and car.lic_code like concat('%',#{query.licCode},'%')
+            </if>
+            <if test="query.seetingId != null and query.seetingId != ''">
+                and  FIND_IN_SET(car.id,(select car_id from car_scheduling_time c where c.id = #{query.seetingId}))
+            </if>
+        </where>
+        order by car.create_time desc
+    </select>
+    <select id="getAddCarFenCenInfoPage" resultMap="carFenceRelationVO">
+        SELECT
+        car.id as car_id,
+        car.lic_code,
+        dept.name as dept_name,
+        cb.car_sub_brand
+        FROM
+        car_info car
+        left join sys_dept dept on dept.dept_id = car.dept_id
+        LEFT JOIN car_model model ON car.id = model.car_id
+        LEFT JOIN car_sub_brand cb ON cb.id = model.sub_brand_id
+        WHERE car.del_flag =0
+        <if test="query.fenceId!=null">
+            and car.id not in (select car_id from car_fence_relation where fence_id=#{query.fenceId})
+        </if>
+        <if test="query.etpId !=null">
+            and car.etp_id=#{query.etpId}
+        </if>
+        <if test="query.deptId !=null">
+            and car.dept_id =#{query.deptId}
+        </if>
+        <if test="query.licCode !=null">
+            and car.lic_code like concat('%',#{query.licCode},'%')
+        </if>
+        order by car.create_time desc
+    </select>
+    <select id="fenceRelationCarInfoPage" resultMap="carFenceRelationVO">
+        SELECT
+        car.id AS car_id,
+        car.lic_code,
+        dept.NAME AS dept_name,
+        cb.car_sub_brand,
+        (
+        SELECT
+       count(car_id)
+        FROM
+            car_fence_relation
+        WHERE
+            car_id = car.id
+        )as fenceNum
+    FROM
+        car_info car
+        LEFT JOIN sys_dept dept ON dept.dept_id = car.dept_id
+        LEFT JOIN car_model model ON car.id = model.car_id
+        LEFT JOIN car_sub_brand cb ON cb.id = model.sub_brand_id
+        where car.del_flag=0
+        <if test="query.etpId !=null">
+            and car.etp_id=#{query.etpId}
+        </if>
+        <if test="query.deptId !=null">
+            and car.dept_id=#{query.deptId}
+        </if>
+        <if test="query.licCode !=null">
+            and car.lic_code like concat('%',#{query.licCode},'%')
+        </if>
+        order by car.create_time desc
+    </select>
+    <select id="selectFenceByCarIdPage" resultMap="carFenceRelationVO">
+        SELECT
+            cf.id,
+            fen.remind_type,
+            fen.fence_name,
+            fen.lat,
+            fen.lng,
+            dept.NAME AS dept_name
+        FROM
+            fence fen
+            INNER JOIN car_fence_relation cf ON cf.fence_id = fen.id
+            INNER JOIN sys_user usr ON fen.create_user = usr.user_id
+            INNER JOIN sys_dept dept ON dept.dept_id = usr.dept_id
+            <where>
+                <if test="query.carId !=null">
+                    and cf.car_id=#{query.carId}
+                </if>
+                <if test="query.fenceName !=null and query.fenceName!=''">
+                    and fen.fence_name like concat('%',#{query.fenceName},'%')
+                </if>
+            </where>
+            order by fen.create_time desc
+    </select>
+</mapper>

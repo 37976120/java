@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.CarOtherItemMapper">
+    <!--分页-->
+    <select id="queryPage" resultType="com.htstar.ovms.enterprise.api.vo.CarOtherItemPageVO">
+        SELECT
+        c.lic_code,
+        u.nick_name as username,
+        u1.nick_name as driver,
+        item.*
+        FROM
+        car_other_item item
+        LEFT JOIN car_info c ON item.car_id = c.`id`
+        LEFT JOIN sys_user u ON u.user_id = item.`user_id`
+        LEFT JOIN sys_user u1 on item.driver_user_id=u1.user_id
+        <where>
+            item.`del_flag`=0 and item.item_status !=0
+            <if test="query.startTime != null">
+                AND item.item_time &gt;=#{query.startTime}
+            </if>
+            <if test="query.endTime!= null">
+                AND item.item_time &lt;=#{query.endTime}
+            </if>
+            <if test="query.licCode != null and query.licCode !=''">
+                AND c.lic_code like concat('%',#{query.licCode},'%')
+            </if>
+            <if test="query.itemStatus != null">
+                AND item.item_status = #{query.itemStatus}
+            </if>
+            <if test="query.etpId != null">
+                AND item.etp_id = #{query.etpId}
+            </if>
+            <if test="query.userId!=null and query.userId>0">
+                AND (item.user_id=#{query.userId}
+            </if>
+            <if test="query.licCodes !=null ">
+                or c.lic_code in
+                <foreach item="item" collection="query.licCodes" index="index" open="(" separator=","
+                         close=")">
+                    #{item}
+                </foreach>
+                )
+            </if>
+        </where>
+        order by item.create_time desc
+    </select>
+    <!--获取所有id-->
+    <select id="getIdList" resultType="int">
+        SELECT id FROM car_other_item WHERE del_flag=0 AND etp_id=#{etpId}
+    </select>
+
+    <!--导出excel-->
+    <select id="exportExcel" resultType="com.htstar.ovms.enterprise.api.vo.CarOtherItemPageVO">
+        SELECT
+        c.lic_code,
+        u.nick_name as username,
+        u1.nick_name as driver,
+        item.*
+        FROM
+        car_other_item item
+        LEFT JOIN car_info c ON item.car_id=c.`id`
+        LEFT JOIN sys_user u ON u.user_id=item.`user_id`
+        left join sys_user u1 on u1.user_id=item.driver_user_id
+        where item.`del_flag`=0 AND item.etp_id = #{query.etpId}
+        and item.item_status!=0
+        <if test="query.ids!=null and query.ids!=''">
+            AND item.id IN (${query.ids})
+        </if>
+        <if test="query.startTime != null">
+            AND item.item_time &gt;=#{query.startTime}
+        </if>
+        <if test="query.endTime!= null">
+            AND item.item_time &lt;=#{query.endTime}
+        </if>
+        <if test="query.licCode != null and query.licCode !=''">
+            AND c.lic_code like concat('%',#{query.licCode},'%')
+        </if>
+        <if test="query.itemStatus != null  ">
+            AND item.item_status = #{query.itemStatus}
+        </if>
+        order by item.create_time desc
+    </select>
+    <select id="getItemById" resultType="com.htstar.ovms.enterprise.api.vo.CarOtherItemPageVO">
+        SELECT
+          i.*,
+          u1.`nick_name` as driver,
+          c.lic_code as licCode,
+          u2.nick_name as username
+        FROM
+          car_other_item i
+          LEFT JOIN sys_user u1
+            ON i.`driver_user_id` = u1.`user_id`
+          left join car_info c
+          on i.car_id=c.id
+          left join sys_user u2 on i.user_id=u2.user_id
+        WHERE i.id = #{id}
+    </select>
+    <select id="getItemByUser" resultType="com.htstar.ovms.enterprise.api.vo.CarOtherItemPageVO">
+         SELECT
+          i.*,
+          u.`nick_name` as driver,
+          c.lic_code as licCode
+        FROM
+          car_other_item i
+          LEFT JOIN sys_user u
+            ON i.`driver_user_id` = u.`user_id`
+          left join car_info c
+          on i.car_id=c.id
+        WHERE i.del_flag=0 and i.item_status=0 and i.item_type=#{itemType} and i.user_id = #{userId}
+    </select>
+</mapper>

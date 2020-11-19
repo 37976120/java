@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.device.mapper.FenceMapper">
+
+    <resultMap id="fenceMap" type="com.htstar.ovms.device.api.entity.Fence">
+        <id property="id" column="id"/>
+        <result property="fenceName" column="fence_name"/>
+        <result property="remark" column="remark"/>
+        <result property="mapType" column="map_type"/>
+        <result property="lat" column="lat"/>
+        <result property="lng" column="lng"/>
+        <result property="radius" column="radius"/>
+        <result property="fenceStatus" column="fence_status"/>
+        <result property="createUser" column="create_user"/>
+        <result property="abscissas" column="abscissas"/>
+        <result property="ordinates" column="ordinates"/>
+        <result property="fenceType" column="fence_type"/>
+        <result property="etpId" column="etp_id"/>
+        <result property="remindType" column="remind_type"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <resultMap id="fenceVO" type="com.htstar.ovms.device.api.vo.FenceVO">
+        <result property="fenceName" column="fence_name"/>
+        <result property="remark" column="remark"/>
+        <result property="mapType" column="map_type"/>
+        <result property="lat" column="lat"/>
+        <result property="lng" column="lng"/>
+        <result property="radius" column="radius"/>
+        <result property="fenceId" column="fence_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="carId" column="car_id"/>
+        <result property="deviceSn" column="device_sn"/>
+        <result property="remindType" column="remind_type"/>
+        <result property="fenceType" column="fence_type"/>
+        <result property="abscissas" column="abscissas"/>
+        <result property="ordinates" column="ordinates"/>
+    </resultMap>
+
+    <resultMap id="fencePageVO" type="com.htstar.ovms.device.api.vo.FencePageVO" extends="fenceMap">
+        <result property="carNum" column="carNum"/>
+    </resultMap>
+
+    <select id="queryFenceList" resultMap="fenceVO">
+        SELECT
+          cd.`device_sn`,
+          f.remind_type,
+          cfr.fence_id,
+          cfr.create_time,
+          cfr.`car_id`,
+          f.fence_name,
+          f.`lat`,
+          f.`lng`,
+          f.`radius`,
+          f.`remark`,
+          f.map_type,
+          f.fence_type,
+          f.abscissas,
+          f.ordinates
+        FROM
+          `car_device` cd
+          LEFT JOIN `car_fence_relation` cfr
+            ON cd.car_id = cfr.`car_id`
+          LEFT JOIN `fence` f
+            ON cfr.fence_id = f.id
+        WHERE cd.`device_sn` = #{deviceSn}
+          AND f.`fence_status` = 1
+    </select>
+
+    <select id="getFencePage" resultMap="fencePageVO">
+        SELECT f.*,
+        ( SELECT count( id ) FROM car_fence_relation WHERE fence_id = f.id ) AS carNum
+        FROM
+            fence f
+        where
+        f.fence_status = 1
+        <if test="query.etpId!=null">
+            and f.etp_id=#{query.etpId}
+        </if>
+        <if test="query.fenceName !=null and query.fenceName!=''">
+            and f.fence_name like concat('%',#{query.fenceName},'%')
+        </if>
+    </select>
+
+    <select id="getNotAddFenceByCarInfoPage" resultMap="fencePageVO">
+        SELECT
+            fen.*
+        FROM
+        fence fen
+        where fen.fence_status = 1
+        <if test="query.carId!=null">
+            and fen.id not in (select fence_id from car_fence_relation where car_id=#{query.carId})
+        </if>
+        <if test="query.etpId!=null">
+            and fen.etp_id=#{query.etpId}
+        </if>
+        <if test="query.fenceName !=null and query.fenceName!=''">
+            and fen.fence_name like concat('%',#{query.fenceName},'%')
+        </if>
+    </select>
+</mapper>

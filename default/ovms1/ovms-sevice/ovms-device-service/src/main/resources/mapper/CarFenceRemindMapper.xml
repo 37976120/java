@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.device.mapper.CarFenceRemindMapper">
+
+  <resultMap id="carFenceRemindMap" type="com.htstar.ovms.device.api.entity.CarFenceRemind">
+                  <id property="id" column="id"/>
+                        <result property="carId" column="car_id"/>
+                        <result property="tripId" column="trip_id"/>
+                        <result property="remindType" column="remind_type"/>
+                        <result property="createTime" column="create_time"/>
+            </resultMap>
+    <select id="getLastRemindByTripId" resultType="com.htstar.ovms.device.api.entity.CarFenceRemind">
+        select * from car_fence_remind where trip_id = #{tripId} order by id desc limit 1
+    </select>
+</mapper>

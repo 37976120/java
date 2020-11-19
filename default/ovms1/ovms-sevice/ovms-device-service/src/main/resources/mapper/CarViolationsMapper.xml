@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.device.mapper.CarViolationsMapper">
+
+  <resultMap id="carViolationsMap" type="com.htstar.ovms.device.api.entity.CarViolations">
+  <id property="id" column="id"/>
+  <result property="deviceSn" column="device_sn"/>
+  <result property="staTime" column="sta_time"/>
+  <result property="endTime" column="end_time"/>
+  <result property="staAddr" column="sta_addr"/>
+  <result property="endAddr" column="end_addr"/>
+  </resultMap>
+  <sql id="clums">
+    id,
+    device_sn,
+    sta_time,
+    end_time,
+    sta_addr,
+    end_addr,
+  </sql>
+  <select id="getAllCarViolationsPage" resultType="com.htstar.ovms.device.api.vo.CarViolationsVO">
+    	select
+        a.id,
+    	c.lic_code as licCode,
+		a.device_sn as deviceSn,
+		a.sta_addr as staAddr,
+		a.end_addr  as endAddr,
+		a.sta_time as staTime,
+		a.end_time as endTime
+		from car_violations as a
+		INNER JOIN car_device  b on b.device_sn =a.device_sn
+		INNER JOIN car_info  c on c.id  =b.car_id
+		<where>
+
+            <if test="car.licCode != null and car.licCode !='' ">
+               c.lic_code like concat('%', #{car.licCode},'%')
+                or  a.device_sn like concat('%', #{car.licCode},'%')
+            </if>
+<!--            <if test="car.deviceSn != null and car.deviceSn !='' ">-->
+<!--                or  a.device_sn like concat('%', #{car.deviceSn},'%')-->
+<!--            </if>-->
+            <if test="car.startTime != null and car.startTime !='' ">
+                and  DATE_FORMAT(a.sta_time,'%Y-%m-%d') >= #{car.startTime}
+            </if>
+            <if test="car.etpId != null and car.etpId !='' ">
+                and   c.etp_id = #{car.etpId}
+            </if>
+            <if test="car.endTime != null and car.endTime !='' ">
+                and  DATE_FORMAT(a.end_time,'%Y-%m-%d') &lt;= #{car.endTime}
+            </if>
+        </where>
+      order by id asc
+  </select>
+    <select id="getAllCarViolationsCount" resultType="java.lang.Integer">
+        select
+        count(1)
+        from car_violations as a
+        INNER JOIN car_device  b on b.device_sn =a.device_sn
+        INNER JOIN car_info  c on c.id  =b.car_id
+        <where>
+            <if test="car.etpId != null and car.etpId !='' ">
+                c.etp_id = #{car.etpId}
+            </if>
+            <if test="car.licCode != null and car.licCode !='' ">
+                and  c.lic_code like concat('%', #{car.licCode},'%') or  a.device_sn like concat('%', #{car.licCode},'%')
+            </if>
+            <if test="car.startTime != null and car.startTime !='' ">
+                and  a.sta_time = #{car.startTime}
+            </if>
+            <if test="car.endTime != null and car.endTime !='' ">
+                and  a.end_time = #{car.endTime}
+            </if>
+        </where>
+    </select>
+    <select id="getAllCarViolations" resultType="com.htstar.ovms.device.api.vo.CarViolationsVO">
+        select
+        a.id,
+        c.lic_code as licCode,
+        a.device_sn as deviceSn,
+        a.sta_addr as staAddr,
+        a.end_addr  as endAddr,
+        a.sta_time as staTime,
+        a.end_time as endTime
+        from car_violations as a
+        INNER JOIN car_device  b on b.device_sn =a.device_sn
+        INNER JOIN car_info  c on c.id  =b.car_id
+        <where>
+            <if test="car.etpId != null and car.etpId !='' ">
+                c.etp_id = #{car.etpId}
+            </if>
+            <if test="car.licCode != null and car.licCode !='' ">
+                and  c.lic_code like concat('%', #{car.licCode},'%') or  a.device_sn like concat('%', #{car.licCode},'%')
+            </if>
+            <if test="car.startTime != null and car.startTime !='' ">
+                and  a.sta_time = #{car.startTime}
+            </if>
+            <if test="car.endTime != null and car.endTime !='' ">
+                and  a.end_time = #{car.endTime}
+            </if>
+            <if test="car.id != null and  car.id !='' ">
+                and  a.id in
+                <foreach item="item" index="index" collection="car.id" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by id asc
+    </select>
+</mapper>

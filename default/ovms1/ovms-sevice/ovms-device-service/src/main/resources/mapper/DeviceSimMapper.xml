@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.device.mapper.DeviceSimMapper">
+
+    <resultMap id="deviceSimMap" type="com.htstar.ovms.device.api.entity.DeviceSim">
+        <id property="id" column="id"/>
+        <result property="sim" column="sim"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="createTime" column="create_time"/>
+        <result property="remarks" column="remarks"/>
+        <result property="deviceSn" column="device_sn"/>
+    </resultMap>
+
+    <select id="getDeviceSimPage" resultMap="deviceSimMap">        SELECT
+        sim.*
+        FROM
+        device_sim sim
+        left JOIN device d on d.device_sn = sim.device_sn
+        left join etp_info b on b.id = d.etp_id
+        <where>
+<!--            and d.etp_id in-->
+<!--            <foreach item="item" index="index" collection="query.etpIds" open="(" close=")" separator=",">-->
+<!--                #{item}-->
+<!--            </foreach>-->
+            <if test="query.deviceSn!=null and query.deviceSn!=''">
+                and sim.device_sn like concat('%',#{query.deviceSn},'%')
+            </if>
+            <if test="query.sim!=null and query.sim!=''">
+                and sim.sim like concat('%',#{query.sim},'%')
+            </if>
+            <if test="query.endTime!=null">
+                and DATE_FORMAT(sim.end_time,'%Y-%m-%d')=DATE_FORMAT(#{query.endTime},'%Y-%m-%d')
+            </if>
+        </where>
+        order by sim.create_time desc
+    </select>
+
+    <select id="exportSimInfo" resultMap="deviceSimMap">
+        SELECT
+        sim.*
+        FROM
+        device_sim sim
+        <where>
+        <if test="query != null">
+            <if test="query.deviceSn!=null and query.deviceSn!=''">
+                and sim.device_sn like concat('%',#{query.deviceSn},'%')
+            </if>
+            <if test="query.sim!=null and query.sim!=''">
+                and sim.sim like concat('%',#{query.sim},'%')
+            </if>
+            <if test="query.endTime!=null">
+                and DATE_FORMAT(sim.end_time,'%Y-%m-%d')=DATE_FORMAT(#{query.endTime},'%Y-%m-%d')
+            </if>
+            <if test="list !=null and list.size()>0">
+                and sim.id in
+                <foreach collection="list" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </if>
+        </where>
+        order by sim.create_time desc LIMIT 2000
+    </select>
+</mapper>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.ApplyVerifyNodeMapper">
+
+<resultMap id="applyVerifyNodeMap" type="com.htstar.ovms.enterprise.api.entity.ApplyVerifyNode">
+    <id property="id" column="id"/>
+    <result property="etpId" column="etp_id"/>
+    <result property="smsNotifyStatus" column="sms_notify_status"/>
+    <result property="backStatus" column="back_status"/>
+    <result property="invalidStatus" column="invalid_status"/>
+    <result property="verifyUserList" column="verify_user_list"/>
+    <result property="processId" column="process_id"/>
+    <result property="nodeType" column="node_type"/>
+    <result property="createUserId" column="create_user_id"/>
+    <result property="createTime" column="create_time"/>
+</resultMap>
+    <select id="getNodeId" resultType="java.lang.Integer">
+        select id from apply_verify_node where process_id = #{processId} and node_type = #{nodeType} order by id desc limit 1
+    </select>
+    <select id="getNextNeedVerifyNode" resultType="com.htstar.ovms.enterprise.api.entity.ApplyVerifyNode">
+        select * from apply_verify_node where process_id = #{processId} and node_type > #{nodeType} and verify_user_list is not null order by id desc limit 1
+    </select>
+    <select id="getVerifyUserVOList" resultType="com.htstar.ovms.enterprise.api.vo.VerifyUserVO">
+        SELECT
+          user_id,
+          username,
+          nick_name,
+          avatar
+        FROM
+          sys_user
+        WHERE user_id IN ( ${ids} )
+    </select>
+    <select id="getNickName" resultType="java.lang.String">
+        select nick_name from sys_user where user_id = #{userId} limit 1
+    </select>
+</mapper>

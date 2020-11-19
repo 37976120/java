@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.ApplyEventTaskMapper">
+
+    <resultMap id="applyOrderTaskMap" type="com.htstar.ovms.enterprise.api.entity.ApplyOrderTask">
+        <id property="id" column="id"/>
+        <result property="taskType" column="task_type"/>
+        <result property="orderId" column="order_id"/>
+        <result property="verifyType" column="verify_type"/>
+        <result property="verifyUserId" column="verify_user_id"/>
+        <result property="verifyRoleId" column="verify_role_id"/>
+        <result property="processStatus" column="process_status"/>
+        <result property="readFalg" column="read_falg"/>
+        <result property="readTime" column="read_time"/>
+        <result property="delFlag" column="del_flag"/>
+    </resultMap>
+    <sql id="clums">
+        id,
+        task_type,
+        order_id,
+        verify_type,
+        verify_user_id,
+        verify_role_id,
+        process_status,
+        read_falg,
+        read_time,
+        del_flag
+    </sql>
+    <update id="cleanAllTask">
+        UPDATE apply_order_task SET del_flag = 1 WHERE order_id = #{orderId} and task_type in (1,3)
+    </update>
+    <update id="updateByParams">
+        UPDATE apply_order_task SET task_type = #{taskType} WHERE order_id = #{orderId} and verify_user_id = #{userId} and process_status = #{processStatus}
+    </update>
+    <update id="delByParams">
+        UPDATE apply_order_task SET del_flag = 1 WHERE order_id = #{orderId} and verify_user_id != #{userId} and process_status = #{processStatus} and task_type = 1
+    </update>
+    <update id="overTask">
+        UPDATE apply_order_task SET del_flag = 1 WHERE order_id = #{orderId} and task_type = 1
+    </update>
+    <select id="getAdminRoleId" resultType="java.lang.Integer">
+        SELECT
+          role_id
+        FROM
+          `sys_role`
+        WHERE role_code = 'ROLE_ADMIN'
+          AND etp_id = #{etpId}
+          AND del_flag = 0
+        LIMIT 1
+    </select>
+    <select id="getVerifyIdList" resultType="java.lang.Integer">
+    SELECT
+      verify_user_id
+    FROM
+      `apply_order_task`
+    WHERE order_id = #{orderId}
+      AND del_flag = 0
+      AND verify_type = 1
+      AND task_type = 1
+    </select>
+</mapper>

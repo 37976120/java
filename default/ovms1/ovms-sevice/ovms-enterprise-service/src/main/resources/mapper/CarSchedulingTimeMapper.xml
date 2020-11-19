@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.CarSchedulingTimeMapper">
+
+  <resultMap id="carSchedulingTimeMap" type="com.htstar.ovms.enterprise.api.entity.CarSchedulingTime">
+  <id property="id" column="id"/>
+  <result property="carId" column="car_id"/>
+  <result property="notScheduleWeek" column="not_schedule_week"/>
+  <result property="settingname" column="settingName"/>
+  <result property="statime" column="staTime"/>
+  <result property="endtime" column="endTime"/>
+  <result property="updatetime" column="updateTime"/>
+  <result property="createtime" column="createTime"/>
+  </resultMap>
+
+  <resultMap id="carVos" type="com.htstar.ovms.enterprise.api.vo.CarSchedulingTimeVO" >
+    <id property="id" column="id"/>
+    <result property="carId" column="car_id"/>
+    <result property="notScheduleWeek" column="not_schedule_week"/>
+    <result property="settingname" column="settingName"/>
+    <result property="statime" column="staTime"/>
+    <result property="endtime" column="endTime"/>
+    <result property="updatetime" column="updateTime"/>
+    <result property="createtime" column="createTime"/>
+    <result property="licCodes" column="licCode"/>
+  </resultMap>
+  <sql id="clums">
+    id,
+    car_id,
+    not_schedule_week,
+    settingName,
+    staTime,
+    endTime,
+    updateTime,
+    createTime,
+    etp_id
+  </sql>
+  <select id="getSchedulingAll" resultMap="carVos">
+    SELECT
+    s.*,
+    ( SELECT GROUP_CONCAT(c.lic_code)
+    FROM `car_info` AS c
+    WHERE FIND_IN_SET(c.id,s.car_id) ) as licCode
+     FROM `car_scheduling_time` AS s
+    <where>
+      <if test="settingname !=null and settingname !='' ">
+        s.settingName like concat('%',#{settingname},'%')
+      </if>
+      <if test="updatetime !=null and updatetime !='' ">
+        AND s.updateTime = #{updatetime}
+      </if>
+      <if test="createtime !=null and createtime !='' ">
+        AND s.createTime = #{createtime}
+      </if>
+      <if test=" carId !=null and carId !='' ">
+        AND s.car_id like concat('%',#{carId},'%')
+      </if>
+      <if test=" etpId !=null and etpId !='' ">
+        AND s.etp_id =#{etpId}
+      </if>
+    </where>
+  </select>
+  <select id="getBylicCode" resultType="java.lang.Integer">
+    SELECT
+    count(1)
+    FROM `car_scheduling_time` AS s
+    where  (instr(s.car_id,(select id from car_info where lic_code =#{sche.licCode}) )>0)
+    and s.staTime &lt;= #{sche.statime} and s.endTime >=#{sche.endtime} and s.not_schedule_week like concat('%',#{sche.notScheduleWeek},'%')
+  </select>
+  <select id="getBylicCodeCount" resultType="java.lang.Integer">
+     SELECT
+     count(1)
+     FROM `car_scheduling_time` AS s
+	 where  (instr(s.car_id,(select id from car_info where lic_code =#{licCode}) )>0)
+  </select>
+</mapper>

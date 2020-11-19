@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.CarEtcItemMapper">
+    <!--保存报表数据-->
+    <insert id="saveReportExpenseByCar" parameterType="com.htstar.ovms.report.api.entity.ReportExpense">
+        INSERT INTO report_expense
+        (month_short,etp_id,car_id,fuel_cost,etc_cost,ins_cost,
+        mai_cost,mot_cost,repair_cost,stop_cost,wash_cost,
+        ticket_cost,supplies_cost,other_cost,apply_car_count,report_version
+        )
+        VALUE(#{rep.monthShort},#{rep.etpId},#{rep.carId},#{rep.fuelCost}
+        ,#{rep.etcCost},#{rep.insCost},#{rep.maiCost},#{rep.motCost}
+        ,#{rep.repairCost} ,#{rep.stopCost},#{rep.washCost},#{rep.ticketCost}
+        ,#{rep.suppliesCost},#{rep.otherCost},#{rep.applyCarCount},#{rep.reportVersion})
+        ON DUPLICATE KEY UPDATE
+        <if test="rep.fuelCost>0">
+            fuel_cost=fuel_cost+#{rep.fuelCost},
+        </if>
+        <if test="rep.etcCost>0">
+            etc_cost=etc_cost+#{rep.etcCost},
+        </if>
+        <if test="rep.insCost>0">
+            ins_cost=ins_cost+#{rep.insCost},
+        </if>
+        <if test="rep.maiCost>0">
+            mai_cost=mai_cost+#{rep.maiCost},
+        </if>
+        <if test="rep.motCost>0">
+            mot_cost=mot_cost+#{rep.motCost},
+        </if>
+        <if test="rep.repairCost>0">
+            repair_cost=repair_cost+#{rep.repairCost},
+        </if>
+        <if test="rep.stopCost>0">
+            stop_cost=stop_cost+#{rep.stopCost},
+        </if>
+        <if test="rep.washCost>0">
+            wash_cost=wash_cost+#{rep.washCost},
+        </if>
+        <if test="rep.ticketCost>0">
+            ticket_cost=ticket_cost+#{rep.ticketCost},
+        </if>
+        <if test="rep.suppliesCost>0">
+            supplies_cost=supplies_cost+#{rep.suppliesCost},
+        </if>
+        <if test="rep.otherCost>0">
+            other_cost=other_cost+#{rep.otherCost},
+        </if>
+        <if test="rep.applyCarCount>0">
+            apply_car_count=apply_car_count+#{rep.applyCarCount},
+        </if>
+        report_version=report_version+1
+    </insert>
+    <!--新增司机报表数据-->
+    <insert id="saveReportExpenseByDriver" parameterType="com.htstar.ovms.report.api.entity.ReportDriverExpense">
+        INSERT INTO report_driver_expense
+        (month_short,driver_user_id,etp_id
+        ,fuel_cost,etc_cost,
+        stop_cost,wash_cost,
+        ticket_cost,supplies_cost,other_cost
+        )
+        VALUE(#{rep.monthShort},#{rep.driverUserId},#{rep.etpId}
+        ,#{rep.fuelCost},#{rep.etcCost}
+        ,#{rep.stopCost},#{rep.washCost}
+        ,#{rep.ticketCost},#{rep.suppliesCost},#{rep.otherCost})
+        ON DUPLICATE KEY UPDATE
+        <if test="rep.fuelCost>0">
+            fuel_cost=fuel_cost+#{rep.fuelCost}
+        </if>
+        <if test="rep.etcCost>0">
+            etc_cost=etc_cost+#{rep.etcCost}
+        </if>
+        <if test="rep.stopCost>0">
+            stop_cost=stop_cost+#{rep.stopCost}
+        </if>
+        <if test="rep.washCost>0">
+            wash_cost=wash_cost+#{rep.washCost}
+        </if>
+        <if test="rep.ticketCost>0">
+            ticket_cost=ticket_cost+#{rep.ticketCost}
+        </if>
+        <if test="rep.suppliesCost>0">
+            supplies_cost=supplies_cost+#{rep.suppliesCost}
+        </if>
+        <if test="rep.otherCost>0">
+            other_cost=other_cost+#{rep.otherCost}
+        </if>
+    </insert>
+    <!--etc分页-->
+    <select id="queryPage" resultType="com.htstar.ovms.enterprise.api.vo.CarEtcItemPageVO">
+        SELECT
+        c.lic_code,
+        u.nick_name as username,
+        card.card_no as cardNo,
+        u1.nick_name as itemDriver,
+        item.*
+        FROM
+        car_etc_item item
+        LEFT JOIN car_info c ON item.car_id=c.`id`
+        LEFT JOIN sys_user u ON u.user_id=item.`user_id`
+        left join sys_user u1 on u1.user_id=item.driver_user_id
+        LEFT JOIN car_etc_card card ON item.card_id=card.id
+        where item.`del_flag`=0 and item.item_status !=0
+        <if test="query.startTime != null">
+            AND item.item_time &gt;=#{query.startTime}
+        </if>
+        <if test="query.endTime!= null">
+            AND item.item_time &lt;=#{query.endTime}
+        </if>
+        <if test="query.licCode != null and query.licCode !=''">
+            AND c.lic_code like concat('%',#{query.licCode},'%')
+        </if>
+        <if test="query.itemStatus != null  ">
+            AND item.item_status = #{query.itemStatus}
+        </if>
+        <if test="query.etpId != null">
+            AND item.etp_id = #{query.etpId}
+        </if>
+        <if test="query.userId!=null">
+            AND (item.user_id=#{query.userId}
+        </if>
+        <if test="query.licCodes !=null ">
+            or c.lic_code in
+            <foreach item="item" collection="query.licCodes" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+            )
+        </if>
+        order by item.create_time desc
+    </select>
+    <!--获取所有id-->
+    <select id="getIdList" resultType="int">
+        SELECT id FROM car_etc_item WHERE del_flag=0 AND etp_id=#{etpId}
+    </select>
+    <!--导出excel-->
+    <select id="exportExcel" resultType="com.htstar.ovms.enterprise.api.vo.CarEtcItemPageVO">
+        SELECT
+        c.lic_code,
+        u.nick_name as username,
+        card.card_no as cardNo,
+        u1.nick_name as itemDriver,
+        item.*
+        FROM
+        car_etc_item item
+        LEFT JOIN car_info c ON item.car_id=c.`id`
+        LEFT JOIN sys_user u ON u.user_id=item.`user_id`
+        left join sys_user u1 on u1.user_id=item.driver_user_id
+        LEFT JOIN car_etc_card card ON item.card_id=card.id
+        where item.`del_flag`=0 AND item.etp_id = #{query.etpId}
+        and item.item_status!=0
+        <if test="query.ids!=null and query.ids!=''">
+            and item.id IN (${query.ids})
+        </if>
+        <if test="query.startTime != null">
+            AND item.item_time &gt;=#{query.startTime}
+        </if>
+        <if test="query.endTime!= null">
+            AND item.item_time &lt;=#{query.endTime}
+        </if>
+        <if test="query.licCode != null and query.licCode !=''">
+            AND c.lic_code like concat('%',#{query.licCode},'%')
+        </if>
+        <if test="query.itemStatus != null  ">
+            AND item.item_status = #{query.itemStatus}
+        </if>
+        order by item.create_time desc
+
+    </select>
+    <select id="getSumCostByCard" resultType="java.lang.Integer">
+      SELECT IFNULL(SUM(fuel_money),0)
+        FROM car_fuel_item
+       WHERE id=#{cardId}
+       AND del_flag=0
+       AND item_status !=2
+    </select>
+    <select id="getCarEtcItemById" resultType="com.htstar.ovms.enterprise.api.vo.CarEtcItemPageVO">
+        SELECT
+          i.*,
+          car.lic_code AS licCode,
+          u1.`nick_name` AS itemDriver,
+          d.card_no as cardNo,
+          u2.nick_name as username
+        FROM
+          car_etc_item i
+          LEFT JOIN car_info car
+            ON i.`car_id` = car.id
+          LEFT JOIN sys_user u1
+            ON i.`driver_user_id` = u1.`user_id`
+          LEFT JOIN car_etc_card d on i.card_id=d.id
+          left join sys_user u2 on i.user_id=u2.user_id
+        WHERE i.`id` =#{id}
+    </select>
+    <select id="getCarEtcItemByUser" resultType="com.htstar.ovms.enterprise.api.vo.CarEtcItemPageVO">
+        SELECT
+          i.*,
+          car.lic_code AS licCode,
+          u.`nick_name` AS itemDriver,
+          d.card_no as cardNo
+        FROM
+          car_etc_item i
+          LEFT JOIN car_info car
+            ON i.`car_id` = car.id
+          LEFT JOIN sys_user u
+            ON i.`driver_user_id` = u.`user_id`
+          LEFT JOIN car_etc_card d
+          on i.card_id=d.id
+        WHERE i.`user_id` =#{userId} AND i.item_status=0 and i.del_flag=0
+    </select>
+
+</mapper>

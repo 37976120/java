@@ -1,0 +1,49 @@
+server:
+  port: 4002
+  tomcat:
+    connection-timeout: 5000
+    max-connections: 2000
+    max-threads: 100
+spring:
+  application:
+    name: @artifactId@
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_HOST:ovms-register}:${NACOS_PORT:8848}
+        metadata:
+          VERSION: JIN
+      config:
+        server-addr: ${spring.cloud.nacos.discovery.server-addr}
+        file-extension: yml
+        shared-configs:
+          - application-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+  autoconfigure:
+    exclude: org.springframework.cloud.gateway.config.GatewayAutoConfiguration,org.springframework.cloud.gateway.config.GatewayClassPathWarningAutoConfiguration
+  profiles:
+    active: @profiles.active@
+  mvc:
+    async:
+      request-timeout: 5000
+#logging:
+#  level:
+#    com:
+#      htstar:
+#        ovms:
+#          enterprise:
+#            mapper: debug
+#mybatis-plus:
+#  configuration:
+#    log-impl=org:
+#      apache:
+#        ibatis:
+#          logging:
+#            stdout:
+#              StdOutImpl:
+#mybatis-plus:
+#  configuration:
+#    # 是否将sql打印到控制面板(该配置会将sql语句和查询的结果都打印到控制台)
+feign:
+  httpclient:
+    connection-timeout: 20000
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

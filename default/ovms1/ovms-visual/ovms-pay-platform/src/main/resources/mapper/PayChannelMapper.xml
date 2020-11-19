@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.pay.mapper.PayChannelMapper">
+
+	<resultMap id="payChannelMap" type="com.htstar.ovms.pay.entity.PayChannel">
+		<id property="id" column="id"/>
+		<result property="appId" column="app_id"/>
+		<result property="channelName" column="channel_name"/>
+		<result property="channelMchId" column="channel_mch_id"/>
+		<result property="channelId" column="channel_id"/>
+		<result property="state" column="state"/>
+		<result property="param" column="param"/>
+		<result property="remark" column="remark"/>
+		<result property="delFlag" column="del_flag"/>
+		<result property="createTime" column="create_time"/>
+		<result property="updateTime" column="update_time"/>
+		<result property="etpId" column="etp_id"/>
+	</resultMap>
+</mapper>

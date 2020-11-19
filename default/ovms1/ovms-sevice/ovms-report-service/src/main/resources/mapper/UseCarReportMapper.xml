@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.report.mapper.UseCarReportMapper">
+    <select id="getCarIdList" resultType="java.lang.Integer">
+        SELECT
+          id
+        FROM
+          `car_info`
+        WHERE etp_id = #{etpId}
+          AND lic_code LIKE CONCAT('%',#{licCode},'%')
+          AND del_flag = 0
+    </select>
+
+    <select id="queryMonthUseCarCount" resultType="com.htstar.ovms.report.api.vo.CountVO">
+        SELECT
+        MONTH(o.`sta_time`) md,
+        COUNT(1) ct
+        FROM
+        `apply_car_order` o
+        LEFT JOIN `car_info` c
+        ON o.`car_id` = c.`id`
+        WHERE o.`end_time` &lt;= #{endTime}
+        AND o.`end_time` &gt;= #{staTime}
+        AND o.`process_status` = 14
+        AND o.etp_id = #{etpId}
+        <if test="applyType != null">
+            AND o.`apply_type` = #{applyType}
+        </if>
+        <if test="carIdStr != null">
+            AND o.`car_id` in ( ${carIdStr} )
+        </if>
+        <if test="driver != null">
+            AND o.`driver_id` &gt; 0
+        </if>
+        <if test="driveType != null">
+            AND o.drive_type = 2
+        </if>
+        GROUP BY MONTH(o.`sta_time`)
+    </select>
+    <select id="getCarUseVO" resultType="com.htstar.ovms.report.api.vo.CarUseVO">
+        SELECT
+        t1.ct AS useCarCount,
+        t2.ct AS allCarCount
+        FROM
+        (SELECT
+        1 AS lt,
+        COUNT(DISTINCT car_id) ct
+        FROM
+        `apply_car_order` o
+        WHERE o.`etp_id` = #{etpId}
+        AND o.`car_id` > 0
+        AND o.`end_time` &gt;= #{staTime}
+        AND o.`end_time` &lt;= #{endTime}) t1
+        LEFT JOIN
+        (SELECT
+        1 AS lt,
+        COUNT(1) ct
+        FROM
+        `car_info` c
+        WHERE c.`etp_id` = #{etpId}
+        AND c.`create_time` &lt;= #{endTime}
+        AND c.`car_status` = 0
+        AND c.del_flag = 0) t2
+        ON t1.lt = t2.lt
+    </select>
+    <select id="getUseCarPage" resultType="com.htstar.ovms.report.api.vo.CarReportVO">
+        SELECT
+        c.lic_code licCode,
+        IFNULL(d.name, '') deptName,
+        FORMAT(
+        SUM(
+        fuel_cost + etc_cost + ins_cost + mai_cost + mot_cost + repair_cost + stop_cost + wash_cost + ticket_cost +
+        supplies_cost + other_cost
+        ) / 100,
+        2
+        ) costCount,
+        SUM(apply_car_count) useCount
+        FROM
+        `report_expense` e
+        LEFT JOIN car_info c
+        ON e.car_id = c.id
+        LEFT JOIN sys_dept d
+        ON c.dept_id = d.dept_id
+        WHERE e.etp_id = #{etpId}
+        AND e.month_short &gt;= #{staTime}
+        AND e.month_short &lt;= #{endTime}
+        <if test="deptId != null">
+            and c.`dept_id` = #{deptId}
+        </if>
+        GROUP BY e.car_id
+    </select>
+    <select id="getUseCarSum" resultType="java.util.Map">
+        SELECT
+        FORMAT(
+        SUM(
+        fuel_cost + etc_cost + ins_cost + mai_cost + mot_cost + repair_cost + stop_cost + wash_cost + ticket_cost +
+        supplies_cost + other_cost
+        ) / 100,
+        2
+        ) costCount,
+        SUM(apply_car_count) useCount
+        FROM
+        `report_expense` e
+        LEFT JOIN car_info c
+        ON e.car_id = c.id
+        LEFT JOIN sys_dept d
+        ON c.dept_id = d.dept_id
+        WHERE e.etp_id = #{etpId}
+        AND e.month_short &gt;= #{staTime}
+        AND e.month_short &lt;= #{endTime}
+        <if test="deptId != null">
+            and c.`dept_id` = #{deptId}
+        </if>
+    </select>
+    <select id="getUseCarList" resultType="com.htstar.ovms.report.api.vo.CarReportVO">
+        SELECT
+        c.lic_code licCode,
+        IFNULL(d.name, '') deptName,
+        FORMAT(
+        SUM(
+        fuel_cost + etc_cost + ins_cost + mai_cost + mot_cost + repair_cost + stop_cost + wash_cost + ticket_cost +
+        supplies_cost + other_cost
+        ) / 100,
+        2
+        ) costCount,
+        SUM(apply_car_count) useCount
+        FROM
+        `report_expense` e
+        LEFT JOIN car_info c
+        ON e.car_id = c.id
+        LEFT JOIN sys_dept d
+        ON c.dept_id = d.dept_id
+        WHERE e.etp_id = #{etpId}
+        AND e.month_short &gt;= #{staTime}
+        AND e.month_short &lt;= #{endTime}
+        <if test="deptId != null">
+            c.`dept_id` = #{deptId}
+        </if>
+        GROUP BY e.car_id
+    </select>
+    <select id="getTotalCarUseVO" resultType="com.htstar.ovms.report.api.vo.CarUseVO">
+        SELECT
+        t1.ct AS useCarCount,
+        t2.ct AS allCarCount
+        FROM
+        (SELECT
+        1 AS lt,
+        COUNT(DISTINCT car_id) ct
+        FROM
+        `apply_car_order` o
+        WHERE o.`etp_id` = #{etpId}
+        AND o.`car_id` > 0
+        AND o.`end_time` &gt;= #{staTime}
+        AND o.`end_time` &lt;= #{endTime}) t1
+        LEFT JOIN
+        (SELECT
+        1 AS lt,
+        COUNT(1) ct
+        FROM
+        `car_info` c
+        WHERE c.`etp_id` = #{etpId}
+        AND c.`create_time` &lt;= #{endTime}
+        AND c.`car_status` = 0
+        AND c.del_flag = 0) t2
+        ON t1.lt = t2.lt
+    </select>
+    <select id="personalReport" resultType="com.htstar.ovms.report.api.vo.PersonalReportReqVO">
+        SELECT e.car_user_id ,MAX(su.nick_name) AS name, MAX(sd.`name`) AS deptName , FORMAT(SUM(fuel_cost + etc_cost +
+        ins_cost + mai_cost + mot_cost + repair_cost + stop_cost + wash_cost + ticket_cost + supplies_cost + other_cost)
+        / 100, 2) costCount, SUM(apply_car_count) useCount
+        FROM `report_expense` e
+        LEFT JOIN car_info c
+        ON e.car_id = c.id
+        LEFT JOIN sys_user su ON e.car_user_id = su.user_id
+        LEFT JOIN sys_dept sd ON su.dept_id = sd.dept_id
+        WHERE e.etp_id = #{req.etpId} AND e.month_short LIKE CONCAT (#{req.monthShort},'%')
+        <if test="req.carUserId != null">
+           AND e.`car_user_id` = #{req.carUserId}
+        </if>
+        <if test="req.deptId != null">
+           AND su.`dept_id` = #{req.deptId}
+        </if>
+        GROUP BY e.car_user_id
+    </select>
+    <select id="personalReportNopage" resultType="com.htstar.ovms.report.api.vo.PersonalReportReqVO">
+        SELECT e.car_user_id ,MAX(su.nick_name) AS name, MAX(sd.`name`) AS deptName , FORMAT(SUM(fuel_cost + etc_cost +
+        ins_cost + mai_cost + mot_cost + repair_cost + stop_cost + wash_cost + ticket_cost + supplies_cost + other_cost)
+        / 100, 2) costCount, SUM(apply_car_count) useCount
+        FROM `report_expense` e
+        LEFT JOIN car_info c
+        ON e.car_id = c.id
+        LEFT JOIN sys_user su ON e.car_user_id = su.user_id
+        LEFT JOIN sys_dept sd ON su.dept_id = sd.dept_id
+        WHERE e.etp_id = #{req.etpId} AND e.month_short LIKE CONCAT (#{req.monthShort},'%')
+        <if test="req.carUserId != null">
+            AND e.`car_user_id` = #{req.carUserId}
+        </if>
+        <if test="req.deptId != null">
+            AND su.`dept_id` = #{req.deptId}
+        </if>
+        GROUP BY e.car_user_id
+    </select>
+</mapper>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.CarFuelCardMapper">
+    <!--油卡分页-->
+    <select id="queryPage" resultType="com.htstar.ovms.enterprise.api.vo.FuelCardPageVO">
+        SELECT f.*,
+        (
+        CASE
+        WHEN f.`binding_type` = 1 THEN c.`lic_code`
+        WHEN f.`binding_type`=2 THEN u.`nick_name`
+        ELSE '未绑定'
+        END
+        ) bindingUser
+        FROM car_fuel_card f
+        LEFT JOIN car_info c ON f.`binding_id` = c.`id`
+        LEFT JOIN sys_user u ON f.`binding_id` = u.`user_id`
+          where  f.`del_flag`=0
+            <if test="carFileManageReq.card!=null and carFileManageReq.card!=''">
+                and (f.`card_name`like concat('%',#{carFileManageReq.card},'%') or f.`card_no`like
+                concat('%',#{carFileManageReq.card},'%'))
+            </if>
+            <if test="carFileManageReq.etpId != null">
+                AND f.etp_id =#{carFileManageReq.etpId}
+            </if>
+    </select>
+    <!--获取所有id-->
+    <select id="getIdList" resultType="java.lang.Integer">
+          SELECT id FROM car_fuel_card WHERE del_flag=0 AND etp_id=#{etpId}
+    </select>
+    <!--导出-->
+    <select id="exportExcel" resultType="com.htstar.ovms.enterprise.api.vo.FuelCardPageVO">
+        SELECT f.*,
+        (
+        CASE
+        WHEN f.`binding_type` = 1 THEN c.`lic_code`
+        WHEN f.`binding_type`=2 THEN u.`nick_name`
+        ELSE '未绑定'
+        END
+        ) bindingUser
+        FROM car_fuel_card f
+        LEFT JOIN car_info c ON f.`binding_id` = c.`id`
+        LEFT JOIN sys_user u ON f.`binding_id` = u.`user_id`
+       where  f.`del_flag`=0
+            <if test="req.ids!=null and req.ids!=''">
+              and f.id in (${req.ids})
+            </if>
+            <if test="req.card!=null and req.card!=''">
+                and f.`card_name`like concat('%',#{req.card},'%') or f.`card_no`like
+                concat('%',#{req.card},'%')
+            </if>
+            <if test="req.etpId != null">
+                AND f.etp_id =#{req.etpId}
+            </if>
+    </select>
+</mapper>

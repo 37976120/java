@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.ApplyProcessRecordMapper">
+    <resultMap id="applyProcessRecordMap" type="com.htstar.ovms.enterprise.api.entity.ApplyProcessRecord">
+        <id property="id" column="id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="operationType" column="operation_type"/>
+        <result property="nodeId" column="node_id"/>
+        <result property="operationUserId" column="operation_user_id"/>
+        <result property="remark" column="remark"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+    <select id="queryDetailApplyCarRecordVOList"
+            resultType="com.htstar.ovms.enterprise.api.vo.DetailApplyCarRecordVO">
+        SELECT
+          r.`operation_type`,
+          r.`create_time`,
+          u.`username`,
+          u.`nick_name`,
+          u.avatar,
+          n.`node_type`
+        FROM
+          `apply_process_record` r
+          LEFT JOIN sys_user u
+            ON r.`operation_user_id` = u.user_id
+          LEFT JOIN `apply_verify_node` n
+            ON r.`node_id` = n.id
+        WHERE r.`order_id` = #{orderId}
+        ORDER BY r.`id`
+    </select>
+    <select id="getDistribution" resultType="com.htstar.ovms.enterprise.api.entity.ApplyProcessRecord">
+        select id, order_id, operation_type, node_id, operation_user_id, remark, create_time from apply_process_record
+         where  order_id = #{orderId} and operation_type in(7,8) order by id desc limit 1
+    </select>
+    <select id="getByNodeType" resultType="java.lang.String">
+        SELECT
+          u.`nick_name`
+        FROM
+          `apply_process_record` r
+          LEFT JOIN `apply_verify_node` n
+            ON r.`node_id` = n.`id`
+          LEFT JOIN sys_user u
+            ON r.`operation_user_id` = u.`user_id`
+        WHERE r.`order_id` = #{orderId}
+          AND n.`node_type` = #{nodeType}
+        ORDER BY r.id DESC
+        LIMIT 1
+    </select>
+    <select id="getNickNameByOPType" resultType="java.lang.String">
+        SELECT
+          u.`nick_name`
+        FROM
+          `apply_process_record` r
+          LEFT JOIN sys_user u
+            ON r.`operation_user_id` = u.`user_id`
+        WHERE r.`order_id` = #{orderId}
+          AND r.operation_type = #{operationType}
+        ORDER BY r.id DESC
+        LIMIT 1
+    </select>
+
+</mapper>

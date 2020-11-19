@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.admin.mapper.SysSuggestionsMapper">
+
+  <resultMap id="sysSuggestionsMap" type="com.htstar.ovms.admin.api.entity.SysSuggestions">
+  <id property="id" column="id"/>
+  <result property="suggestionsContent" column="suggestions_content"/>
+  <result property="createUserId" column="create_user_id"/>
+  <result property="createTime" column="create_time"/>
+  </resultMap>
+  <resultMap id="suggVoResultMap" type="com.htstar.ovms.admin.api.vo.SysSuggestionsVO">
+    <id property="id" column="id"/>
+    <result property="suggestionsContent" column="suggestions_content"/>
+    <result property="createUserId" column="create_user_id"/>
+    <result property="createTime" column="create_time"/>
+    <result column="nick_name" property="nickName"/>
+    <result column="phone" property="phone"/>
+    <result column="etp_id" property="etpId"/>
+    <result column="etp_name" property="etpName"/>
+    <collection property="roleList" ofType="com.htstar.ovms.admin.api.entity.SysRole">
+      <id column="role_id" property="roleId"/>
+      <result column="role_name" property="roleName"/>
+      <result column="role_code" property="roleCode"/>
+      <result column="role_desc" property="roleDesc"/>
+      <result column="rcreate_time" property="createTime"/>
+      <result column="rupdate_time" property="updateTime"/>
+    </collection>
+  </resultMap>
+
+  <sql id="clums">
+    id,
+    suggestions_content,
+    create_user_id,
+    create_time
+  </sql>
+  <select id="getPage" resultMap="suggVoResultMap">
+    SELECT
+      s.id,
+      s.suggestions_content,
+      s.create_user_id,
+      s.create_time,
+      u.`nick_name`,
+      u.`phone`,
+      u.`etp_id`,
+      e.`etp_name`,
+      r.role_id,
+      r.role_name,
+      r.role_code,
+      r.role_desc,
+      r.create_time rcreate_time,
+      r.update_time rupdate_time
+    FROM
+      `sys_suggestions` s
+      LEFT JOIN sys_user u
+        ON s.`create_user_id` = u.`user_id`
+      LEFT JOIN etp_info e
+        ON u.`etp_id` = e.id
+      LEFT JOIN sys_user_role ur
+        ON u.`user_id` = ur.`user_id`
+      LEFT JOIN sys_role r
+        ON ur.`role_id` = r.`role_id`
+  </select>
+</mapper>

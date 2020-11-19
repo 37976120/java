@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.htstar.ovms.admin.mapper.SysRoleMapper">
+
+	<!-- 通用查询映射结果 -->
+	<resultMap id="BaseResultMap" type="com.htstar.ovms.admin.api.entity.SysRole">
+		<id column="role_id" property="roleId"/>
+		<result column="role_name" property="roleName"/>
+		<result column="role_code" property="roleCode"/>
+		<result column="role_desc" property="roleDesc"/>
+		<result column="ds_type" property="dsType"/>
+		<result column="ds_scope" property="dsScope"/>
+		<result column="create_time" property="createTime"/>
+		<result column="update_time" property="updateTime"/>
+		<result column="del_flag" property="delFlag"/>
+		<result column="etp_id" property="etpId"/>
+	</resultMap>
+	<select id="getEtpRole" resultMap="BaseResultMap">
+SELECT b.role_id,b.etp_id  FROM sys_role b
+left join etp_info a on a.id = b.etp_id
+where a.parent_id = #{parentId} and  a.del_flag =0 and b.role_code="ROLE_ADMIN"
+<!--or a.id =#{parentId} and  a.del_flag =0-->
+<!--and b.role_code="ROLE_ADMIN"-->
+    </select>
+	<!-- 通过用户ID，查询角色信息-->
+	<select id="listRolesByUserId" resultMap="BaseResultMap">
+        SELECT
+            r.*
+        FROM
+        sys_role r, sys_user_role ur WHERE r.role_id = ur.role_id AND r.del_flag = 0 and  ur.user_id IN (#{userId})
+    </select>
+
+	<select id="getRoleIdByCode" resultType="java.lang.Integer">
+		select role_id from sys_role where role_code = #{roleCode} AND etp_id = #{etpId} limit 1
+	</select>
+</mapper>

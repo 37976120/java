@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.htstar.ovms.admin.mapper.SysUserRoleMapper">
+
+	<!-- 通用查询映射结果 -->
+	<resultMap id="BaseResultMap" type="com.htstar.ovms.admin.api.entity.SysUserRole">
+		<id column="user_id" property="userId"/>
+		<result column="role_id" property="roleId"/>
+	</resultMap>
+
+    <!--根据用户Id删除该用户的角色关系-->
+	<delete id="deleteByUserId">
+		DELETE FROM sys_user_role WHERE user_id = #{userId}
+	</delete>
+	<select id="queryAdminIdList" resultType="java.lang.Integer">
+		SELECT
+		  ur.`user_id`
+		FROM
+		  `sys_role` r
+		  LEFT JOIN `sys_user_role` ur
+			ON r.`role_id` = ur.`role_id`
+		WHERE r.`etp_id` = #{etpId}
+		  AND r.`role_code` = #{roleCode}
+		  AND r.del_flag = 0
+	</select>
+</mapper>

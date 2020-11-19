@@ -1,0 +1,38 @@
+server:
+  port: 9999
+  ssl:
+    enabled: true
+    key-store: classpath:keystore.p12
+    key-store-password: Vump20201029
+    key-password: Vump20201029
+    key-store-type: PKCS12    #PKCS12或JKS
+  tomcat:
+    connection-timeout: 5000
+    max-connections: 2000
+    max-threads: 100
+  servlet:
+    context-path: /
+spring:
+  application:
+    name: @artifactId@
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_HOST:ovms-register}:${NACOS_PORT:8848}
+      config:
+        server-addr: ${spring.cloud.nacos.discovery.server-addr}
+        file-extension: yml
+        shared-configs:
+          - application-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+    gateway:
+      httpclient:
+        ssl:
+          use-insecure-trust-manager: true
+          handshake-timeout: PT10000S
+          close-notify-flush-timeout: PT3000S
+          close-notify-read-timeout: PT0S
+  #  redis:
+  #    host: 9.1.185.171
+  #    password: rG!2peS*0dC@iXs
+  profiles:
+    active: @profiles.active@

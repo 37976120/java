@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.htstar.ovms.admin.mapper.SysUserMapper">
+	<!-- 通用查询映射结果 -->
+	<resultMap id="baseResultMap" type="com.htstar.ovms.admin.api.vo.UserVO">
+		<id column="user_id" property="userId"/>
+		<result column="username" property="username"/>
+		<result column="password" property="password"/>
+		<result column="salt" property="salt"/>
+		<result column="phone" property="phone"/>
+		<result column="avatar" property="avatar"/>
+		<result column="wx_openid" property="wxOpenid"/>
+		<result column="qq_openid" property="qqOpenid"/>
+		<result column="ucreate_time" property="createTime"/>
+		<result column="uupdate_time" property="updateTime"/>
+		<result column="lock_flag" property="lockFlag"/>
+		<result column="udel_flag" property="delFlag"/>
+		<result column="dept_id" property="deptId"/>
+		<result column="etp_id" property="etpId"/>
+		<result column="sex" property="sex"/>
+		<result column="nick_name" property="nickName"/>
+		<result column="dept_name" property="deptName"/>
+		<collection property="roleList" ofType="com.htstar.ovms.admin.api.entity.SysRole"
+					select="com.htstar.ovms.admin.mapper.SysRoleMapper.listRolesByUserId" column="user_id">
+		</collection>
+	</resultMap>
+
+
+	<resultMap id="entMap" type="com.htstar.ovms.admin.api.entity.SysUser">
+		<id column="user_id" property="userId"/>
+		<result column="username" property="username"/>
+		<result column="password" property="password"/>
+		<result column="salt" property="salt"/>
+		<result column="phone" property="phone"/>
+		<result column="avatar" property="avatar"/>
+		<result column="wx_openid" property="wxOpenid"/>
+		<result column="qq_openid" property="qqOpenid"/>
+		<result column="ucreate_time" property="createTime"/>
+		<result column="uupdate_time" property="updateTime"/>
+		<result column="lock_flag" property="lockFlag"/>
+		<result column="udel_flag" property="delFlag"/>
+		<result column="dept_id" property="deptId"/>
+		<result column="nick_name" property="nickName"/>
+		<result column="etp_id" property="etpId"/>
+	</resultMap>
+
+	<!-- userVo结果集 -->
+	<resultMap id="userVoResultMap" type="com.htstar.ovms.admin.api.vo.UserVO">
+		<id column="user_id" property="userId"/>
+		<result column="username" property="username"/>
+		<result column="password" property="password"/>
+		<result column="nick_name" property="nickName"/>
+		<result column="sex" property="sex"/>
+		<result column="email" property="email"/>
+		<result column="salt" property="salt"/>
+		<result column="phone" property="phone"/>
+		<result column="avatar" property="avatar"/>
+		<result column="wx_openid" property="wxOpenid"/>
+		<result column="qq_openid" property="qqOpenid"/>
+		<result column="ucreate_time" property="createTime"/>
+		<result column="uupdate_time" property="updateTime"/>
+		<result column="lock_flag" property="lockFlag"/>
+		<result column="udel_flag" property="delFlag"/>
+		<result column="dept_id" property="deptId"/>
+		<result column="etp_id" property="etpId"/>
+		<result column="dept_name" property="deptName"/>
+		<collection property="roleList" ofType="com.htstar.ovms.admin.api.entity.SysRole">
+			<id column="role_id" property="roleId"/>
+			<result column="role_name" property="roleName"/>
+			<result column="role_code" property="roleCode"/>
+			<result column="role_desc" property="roleDesc"/>
+			<result column="rcreate_time" property="createTime"/>
+			<result column="rupdate_time" property="updateTime"/>
+		</collection>
+	</resultMap>
+
+	<sql id="userRoleSql">
+		u.user_id,
+		u.username,
+		u.password,
+		u.salt,
+		u.phone,
+		u.avatar,
+		u.wx_openid,
+		u.qq_openid,
+		u.dept_id,
+		u.del_flag,
+		u.lock_flag,
+		u.etp_id,
+		u.create_time  ucreate_time,
+		u.update_time  uupdate_time,
+		r.role_id,
+		r.role_name,
+		r.role_code,
+		r.role_desc,
+		r.create_time  rcreate_time,
+		r.update_time  rupdate_time
+	</sql>
+
+	<sql id="userRoleDeptSql">
+		u.user_id,
+		u.username,
+		u.nick_name,
+		u.email,
+		u.sex,
+		u.password,
+		u.salt,
+		u.phone,
+		u.avatar,
+		u.wx_openid,
+		u.qq_openid,
+		u.del_flag,
+		u.lock_flag,
+		u.etp_id,
+		u.create_time  ucreate_time,
+		u.update_time  uupdate_time,
+		r.role_id,
+		r.role_name,
+		r.role_code,
+		r.role_desc,
+		r.create_time  rcreate_time,
+		r.update_time  rupdate_time,
+		d.name  dept_name,
+		d.dept_id
+    </sql>
+
+	<select id="getUserVoByUsername" resultMap="userVoResultMap">
+		SELECT
+			<include refid="userRoleSql"/>
+		FROM
+		sys_user  u
+		LEFT JOIN sys_user_role  ur ON ur.user_id = u.user_id
+		LEFT JOIN sys_role  r ON r.role_id = ur.role_id
+			WHERE u.username = #{username}
+	</select>
+
+	<select id="getUserVoById" resultMap="userVoResultMap">
+        SELECT
+	   		<include refid="userRoleDeptSql"/>
+        FROM
+            sys_user  u
+            LEFT JOIN sys_user_role  ur ON ur.user_id = u.user_id
+            LEFT JOIN sys_role  r ON r.role_id = ur.role_id
+            LEFT JOIN sys_dept  d ON d.dept_id = u.dept_id
+        WHERE
+           u.user_id = #{id}
+    </select>
+
+	<select id="getUserVosPage" resultMap="baseResultMap">
+		SELECT
+		u.user_id,
+		u.username,
+		u.nick_name,
+		u.password,
+		u.salt,
+		u.phone,
+		u.avatar,
+		u.sex,
+		u.wx_openid,
+		u.qq_openid,
+		u.dept_id,
+		u.create_time  ucreate_time,
+		u.update_time  uupdate_time,
+		u.del_flag,
+		u.lock_flag,
+		u.etp_id,
+		 d.name  dept_name
+		FROM
+		sys_user  u
+		LEFT JOIN sys_dept  d ON d.dept_id = u.dept_id
+		<where>
+			u.del_flag = '0'
+			<if test="query.username != null and query.username != ''">
+				AND u.username LIKE CONCAT('%',#{query.username},'%')
+			</if>
+			<if test="query.deptId != null">
+				AND u.dept_id = #{query.deptId}
+			</if>
+		</where>
+		ORDER BY u.create_time DESC
+	</select>
+
+
+	<select id="getUserForLogin" resultMap="entMap" parameterType="java.lang.String">
+		SELECT
+		u.user_id,
+		u.username,
+		u.password,
+		u.salt,
+		u.phone,
+		u.avatar,
+		u.wx_openid,
+		u.qq_openid,
+		u.dept_id,
+		u.create_time,
+		u.update_time,
+		u.del_flag,
+		u.lock_flag,
+		u.etp_id,
+		u.email,
+		u.sex,
+		u.nick_name
+		FROM
+		sys_user  u
+		WHERE u.username = #{userName}
+		LIMIT 1
+	</select>
+    <select id="simplePage" resultType="com.htstar.ovms.admin.api.vo.SimpleUserVO">
+		SELECT
+		u.user_id,
+		u.username,
+		u.phone,
+		u.avatar,
+		u.nick_name,
+		u.dept_id,
+		u.create_time  ucreate_time,
+		u.etp_id,
+		u.sex,
+		d.name  dept_name
+		FROM
+		sys_user  u
+		LEFT JOIN sys_dept  d ON d.dept_id = u.dept_id
+		LEFT JOIN sys_user_role ur on u.user_id = ur.user_id
+		LEFT JOIN sys_role r on ur.role_id = r.role_id
+		<where>
+			u.del_flag = '0'
+			and u.etp_id = #{etpId}
+			<if test="username != null and username != ''">
+				AND (u.username LIKE CONCAT('%',#{username},'%') or u.nick_name LIKE CONCAT('%',#{username},'%'))
+			</if>
+			<if test="deptId != null">
+				AND u.dept_id = #{deptId}
+			</if>
+			<if test="roleCode != null and roleCode != ''">
+				AND r.role_code = #{roleCode}
+			</if>
+			<if test="applyVerifyUserStr != null and applyVerifyUserStr != ''">
+				AND u.user_id in ( ${applyVerifyUserStr} )
+			</if>
+		</where>
+		GROUP BY user_id
+		ORDER BY u.user_id DESC
+	</select>
+	<select id="getApplyVerifyUserStr" resultType="java.util.Map">
+		SELECT
+		  n.`verify_user_list` userListStr,
+		  p.id
+		FROM
+		  `apply_car_process` p
+		  LEFT JOIN `apply_verify_node` n
+			ON p.id = n.`process_id`
+		WHERE p.etp_id = #{etpId}
+		  AND p.`process_type` = #{applyType}
+		  AND n.`node_type` = 20
+		ORDER BY p.id DESC
+		LIMIT 1
+	</select>
+
+    <select id="getUserMsgVOListByRoleId" resultType="com.htstar.ovms.admin.api.vo.UserMsgVO">
+		SELECT
+		  u.`user_id`,
+		  u.`username`,
+		  u.`phone`,
+		  u.`nick_name`,
+		  u.`etp_id`
+		FROM
+		  sys_user u
+		  LEFT JOIN sys_user_role r
+			ON u.`user_id` = r.`user_id`
+		WHERE r.`role_id` = #{roleId}
+		  AND u.`del_flag` = 0
+	</select>
+	<select id="getUserMsgVOListByIds" resultType="com.htstar.ovms.admin.api.vo.UserMsgVO">
+		SELECT
+		  u.`user_id`,
+		  u.`username`,
+		  u.`phone`,
+		  u.`nick_name`,
+		  u.`etp_id`
+		FROM
+		  sys_user u
+		WHERE u.`user_id` in ( ${userIds} )
+		  AND u.`del_flag` = 0
+	</select>
+</mapper>

@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.device.mapper.DeviceTripMapper">
+
+    <resultMap id="deviceTripMap" type="com.htstar.ovms.device.api.entity.DeviceTrip">
+        <id property="id" column="id"/>
+        <result property="deviceSn" column="device_sn"/>
+        <result property="staTime" column="sta_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="mileage" column="mileage"/>
+        <result property="fuelConsumption" column="fuel_consumption"/>
+        <result property="totalMileage" column="total_mileage"/>
+        <result property="totalFuel" column="total_fuel"/>
+        <result property="staLatlon" column="sta_latlon"/>
+        <result property="endLatlon" column="end_latlon"/>
+        <result property="staAddr" column="sta_addr"/>
+        <result property="endAddr" column="end_addr"/>
+        <result property="statisticsStatus" column="statistics_status"/>
+        <result property="sharpAccelerate" column="sharp_accelerate"/>
+        <result property="sharpSlowdown" column="sharp_slowdown"/>
+        <result property="sharpSwerve" column="sharp_swerve"/>
+        <result property="overSpeed" column="over_speed"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+
+
+    <!--加时间显示字段-->
+    <resultMap id="deviceTripVO" type="com.htstar.ovms.device.api.vo.DeviceTripVO" extends="deviceTripMap" >
+        <result property="timeLong" column="timeLong"/>
+        <result property="licCode" column="lic_code"/>
+<!--        <result property="totalMileage" column="total_mileage"/>-->
+<!--        <result property="totalFuel" column="total_fuel"/>-->
+    </resultMap>
+
+    <resultMap id="tripHistoricalVO" type="com.htstar.ovms.device.api.vo.TripHistoricalVO">
+        <result property="deviceSn" column="device_sn"/>
+        <result property="licCode" column="lic_code"/>
+        <result property="etpName" column="etp_name"/>
+<!--        <result property="timeLong" column="timeLong"/>-->
+        <result property="carSubBrand" column="car_sub_brand"/>
+    </resultMap>
+
+    <resultMap id="tripAndCarInfoVO" type="com.htstar.ovms.device.api.vo.TripAndCarInfoVO" extends="deviceTripMap">
+        <result property="licCode" column="lic_code"/>
+    </resultMap>
+
+    <resultMap id="tripReportFormsVO" type="com.htstar.ovms.device.api.vo.TripReportFormsVO">
+        <result property="licCode" column="lic_code"/>
+        <result property="startMonthMileage" column="startMonthMileage"/>
+        <result property="endMonthMileage" column="endMonthMileage"/>
+        <result property="monthMileage" column="monthMileage"/>
+        <result property="startFuelConsumption" column="startFuelConsumption"/>
+        <result property="endFuelConsumption" column="endFuelConsumption"/>
+        <result property="monthFuelConsumption" column="monthFuelConsumption"/>
+        <result property="monthFuelOfKilometers" column="monthFuelOfKilometers"/>
+    </resultMap>
+
+    <update id="updateAlarmCount" parameterType="com.htstar.ovms.device.api.entity.DeviceTrip">
+        UPDATE device_trip set over_speed = over_speed + #{overSpeed},
+                sharp_accelerate = sharp_accelerate + #{sharpAccelerate},
+                sharp_slowdown = sharp_slowdown + #{sharpSlowdown},
+                sharp_swerve = sharp_swerve+ #{sharpSwerve}
+         WHERE device_sn = #{deviceSn} AND sta_time = #{staTime}
+    </update>
+    <select id="getLastTrip" resultType="com.htstar.ovms.device.api.entity.DeviceTrip">
+        select * from device_trip where device_sn = #{deviceSn} and sta_time = #{staTime} order by sta_time desc limit 1
+    </select>
+    <select id="getTripInfoByDeviceSnPage" resultMap="deviceTripVO">
+        SELECT
+        car.lic_code,
+        trip.*,
+        round(TIMESTAMPDIFF( second, trip.sta_time, trip.end_time )/3600,1)AS timeLong
+--         ,
+--         (select sum(round(TIMESTAMPDIFF( second, sta_time,end_time )/3600,1) ) from device_trip)
+--          as totaltimeLong
+        FROM
+        device_trip trip
+        left join car_device cd on trip.device_sn = cd.device_sn
+        left join car_info car on car.id = cd.car_id
+        left join etp_info etp on etp.id = car.etp_id
+        <where>
+            car.del_flag = 0
+            and car.etp_id in
+            <foreach item="item" index="index" collection="query.etpIds" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            <if test="query.deviceSn!=null and query.deviceSn!=''">
+                and trip.device_sn =#{query.deviceSn}
+            </if>
+<!--            <if test="query.etpId != null and query.parentId == null">-->
+<!--                and car.etp_id=#{query.etpId}-->
+<!--            </if>-->
+<!--            <if test="query.parentId != null and query.parentId != '' ">-->
+<!--                and etp.parent_id = #{query.parentId}-->
+<!--            </if>-->
+            <if test="query.licCode !=null and query.licCode!=''">
+                and car.lic_code like concat('%',#{query.licCode},'%')
+            </if>
+            <if test="query.startTime != null and query.startTime!=''">
+                and trip.sta_time >= #{query.startTime}
+            </if>
+            <if test="query.endTime != null and query.endTime!=''">
+                and <![CDATA[trip.end_time <= concat(#{query.endTime},' 23:59:59')]]>
+            </if>
+        </where>
+        order by trip.create_time desc
+    </select>
+    <select id="getTripInfoByDeviceSnTotal" resultType="com.htstar.ovms.device.api.vo.DeviceTripCountTotalVO">
+        SELECT
+        SUM(trip.mileage) as totalMileage ,
+        SUM(trip.fuel_consumption) as totalFuels,
+        SUM(round(TIMESTAMPDIFF( second, trip.sta_time, trip.end_time )/3600,1))AS totaltimeLong
+        FROM
+        device_trip trip
+        left join car_device cd on trip.device_sn = cd.device_sn
+        left join car_info car on car.id = cd.car_id
+        left join etp_info etp on etp.id = car.etp_id
+        <where>
+            car.del_flag = 0
+            and car.etp_id in
+            <foreach item="item" index="index" collection="query.etpIds" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            <if test="query.deviceSn!=null and query.deviceSn!=''">
+                and trip.device_sn =#{query.deviceSn}
+            </if>
+<!--            <if test="query.etpId != null and query.parentId == null">-->
+<!--                and car.etp_id=#{query.etpId}-->
+<!--            </if>-->
+<!--            <if test="query.parentId != null and query.parentId != '' ">-->
+<!--                and etp.parent_id = #{query.parentId}-->
+<!--            </if>-->
+            <if test="query.licCode !=null and query.licCode!=''">
+                and car.lic_code like concat('%',#{query.licCode},'%')
+            </if>
+            <if test="query.startTime!=null and query.startTime!=''">
+                and trip.end_time>=#{query.startTime}
+            </if>
+            <if test="query.endTime!=null and query.endTime!=''">
+                and <![CDATA[trip.end_time <= concat(#{query.endTime},' 23:59:59')]]>
+            </if>
+        </where>
+    </select>
+    <select id="getTripHistoricalPage" resultMap="tripHistoricalVO">
+        SELECT
+        carDev.device_sn,
+        car.lic_code,
+        car.id as carId,
+        etp.etp_name,
+        suBrand.car_sub_brand
+        ,
+        sum(  TIMESTAMPDIFF( HOUR, trip.sta_time, trip.end_time )) AS timeLong
+        FROM
+        car_info car
+        LEFT JOIN car_device carDev ON car.id = carDev.car_id
+        LEFT JOIN car_model model ON model.car_id = car.id
+        LEFT JOIN car_sub_brand suBrand ON suBrand.id = model.sub_brand_id
+        LEFT JOIN etp_info etp ON etp.id = car.etp_id
+        LEFT JOIN device_trip trip on trip.device_sn =carDev.device_sn
+        WHERE
+        car.del_flag = 0
+            <if test="query.etpId != null and query.etpId !=''">
+                and car.etp_id=#{query.etpId}
+            </if>
+            <if test="query.licCode != null and query.licCode !=''">
+                and car.lic_code like concat('%',#{query.licCode},'%')
+            </if>
+<!--            <if test="query.selectDate !=null and query.selectDate==1">-->
+<!--                and DAY(trip.end_time) = DAY(now())-->
+<!--            </if>-->
+<!--            <if test="query.selectDate !=null and query.selectDate==2">-->
+<!--                and month(trip.end_time) = month(now())-->
+<!--            </if>-->
+<!--            <if test="query.selectDate !=null and query.selectDate==3">-->
+<!--                and year(trip.end_time) = year(now())-->
+<!--            </if>-->
+        GROUP BY  car.lic_code,  car.id,  carDev.device_sn, etp.etp_name,  suBrand.car_sub_brand
+        order by car.register_time ,car.id desc
+    </select>
+
+    <select id="getDateTripPage" resultMap="deviceTripVO">
+        SELECT
+		trip.*,
+		TIMESTAMPDIFF( HOUR, trip.sta_time, trip.end_time ) AS timeLong
+	FROM
+		device_trip trip
+	WHERE
+            trip.device_sn = #{query.deviceSn}
+	    <if test="query.selectDate !=null and query.selectDate == 1">
+            and DAY(trip.end_time) = DAY(now())
+        </if>
+        <if test="query.selectDate !=null and query.selectDate == 2">
+            and month(trip.end_time) = month(now())
+        </if>
+        <if test="query.selectDate !=null and query.selectDate == 3">
+                and year(trip.end_time) = year(now())
+        </if>
+        <if test="query.dayTime !=null and query.dayTime !=''">
+            and DAY(trip.end_time) = DAY(date_format(#{query.dayTime}, '%Y-%m-%d'))
+        </if>
+    </select>
+    <select id="getDateTripPages" resultType="java.lang.Integer">
+        SELECT
+--         sum(TIMESTAMPDIFF( HOUR, trip.sta_time, trip.end_time )) AS timeLong
+        sum(mileage /1000) as timeLong
+        FROM
+        device_trip trip
+        WHERE
+        trip.device_sn = #{deviceSn}
+        <if test="selectDate !=null and selectDate == 1">
+            and DATE_FORMAT( trip.end_time, '%Y-%m-%d') = DATE_FORMAT( now(), '%Y-%m-%d')
+        </if>
+        <if test="selectDate !=null and selectDate == 2">
+            and DATE_FORMAT( trip.end_time, '%Y-%m') = DATE_FORMAT( now(), '%Y-%m')
+        </if>
+        <if test="selectDate !=null and selectDate == 3">
+            and DATE_FORMAT( trip.end_time, '%Y') = DATE_FORMAT( now(), '%Y')
+        </if>
+        <if test="dayTime !=null and dayTime !=''">
+            and DAY(trip.end_time) = DAY(date_format(#{dayTime}, '%Y-%m-%d'))
+        </if>
+    </select>
+    <select id="getStatisticsData" resultType="com.htstar.ovms.device.api.vo.StatisticsTripVO">
+        SELECT
+		sum(mileage) as totoalMileage,
+		sum(
+		TIMESTAMPDIFF( HOUR, sta_time, end_time )) as totoalLongTIme,
+		sum( fuel_consumption ) as totoalFuelConsumption
+	FROM
+		device_trip
+		where
+		 device_sn = #{deviceSn} and month(end_time) = month(#{monthTime})
+    </select>
+    <select id="getMontMileage" resultType="com.htstar.ovms.device.api.vo.StatisticsMileageVO">
+         SELECT day(end_time) as getTime, sum(mileage) as mileage FROM device_trip
+            device_trip
+        where
+           device_sn = #{deviceSn} and month(end_time) = month(#{monthTime})
+             GROUP BY day(end_time)
+    </select>
+    <select id="getMontElapsedTime" resultType="com.htstar.ovms.device.api.vo.StatisticsElapsedTimeVO">
+        SELECT
+            day(end_time) as getTime,
+            sum(TIMESTAMPDIFF( HOUR, sta_time, end_time ))as longTime
+        FROM
+            device_trip
+        where
+           device_sn = #{deviceSn} and month(end_time) = month(#{monthTime})
+            GROUP BY day(end_time)
+    </select>
+
+    <select id="getMontFuelConsumption" resultType="com.htstar.ovms.device.api.vo.StatisticsFuelConsumptionVO">
+        SELECT
+            day(end_time) as getTime,
+            sum(fuel_consumption) as fuelConsumption
+        FROM
+            device_trip
+        where
+           device_sn = #{deviceSn} and month(end_time) = month(#{monthTime})
+           GROUP BY day(end_time)
+    </select>
+
+    <select id="exportTripByEtpAndLicCode" resultMap="tripAndCarInfoVO">
+        SELECT
+        trip.*,
+        car.lic_code
+        FROM
+        device_trip trip
+        LEFT JOIN car_device cardev ON trip.device_sn = cardev.device_sn
+        INNER JOIN car_info car ON car.id = cardev.car_id
+        <where>
+            <if test="query.licCode !=null and query.licCode!=''">
+                and car.lic_code like concat('%',#{query.licCode},'%')
+            </if>
+            <if test="query.etpId !=null">
+                and car.etp_id=#{query.etpId}
+            </if>
+            <if test="query.startTime!=null and query.startTime!=''">
+                and trip.sta_time>=#{query.startTime}
+            </if>
+            <if test="query.endTime!=null and query.endTime!=''">
+                and <![CDATA[trip.end_time <=concat(#{query.endTime},' 23:59:59')]]>
+            </if>
+        </where>
+        order by trip.create_time desc
+    </select>
+
+    <select id="getTripReportForms" resultMap="tripReportFormsVO">
+        SELECT
+            ( SELECT lic_code FROM car_info car INNER JOIN car_device carDev ON car.id = carDev.car_id WHERE carDev.device_sn = trip.device_sn ) AS lic_code,
+            sum( CASE WHEN DAY ( trip.create_time )= '1' THEN trip.mileage ELSE 0 END ) AS startMonthMileage,
+            sum( CASE DAY ( trip.create_time ) WHEN '30' THEN trip.mileage WHEN '31' THEN trip.mileage ELSE 0 END ) AS endMonthMileage,
+            sum( trip.mileage ) AS monthMileage,
+            sum( CASE WHEN DAY ( trip.create_time )= '1' THEN trip.fuel_consumption ELSE 0 END ) AS startFuelConsumption,
+            sum( CASE DAY ( trip.create_time ) WHEN '30' THEN trip.fuel_consumption WHEN '31' THEN trip.fuel_consumption ELSE 0 END ) AS endFuelConsumption,
+            sum( trip.fuel_consumption ) AS monthFuelConsumption,
+            sum( trip.fuel_consumption / 100 ) AS monthFuelOfKilometers
+        FROM
+            device_trip trip
+            LEFT JOIN device dev ON trip.device_sn = dev.device_sn
+        WHERE
+            MONTH(trip.create_time)=#{query.month}
+            <if test="query.year !=null and query.year!=''">
+                AND YEAR(trip.create_time)=#{query.year}
+            </if>
+            <if test="query.etpId !=null">
+                and dev.etp_id=#{query.etpId}
+            </if>
+        GROUP BY
+            trip.device_sn
+        <if test="query.licCode !=null and query.licCode!=''">
+            having lic_code like concat('%',#{query.licCode},'%')
+        </if>
+    </select>
+
+    <select id="exportTripReportForms" resultMap="tripReportFormsVO">
+        SELECT
+        ( SELECT lic_code FROM car_info car INNER JOIN car_device carDev ON car.id = carDev.car_id WHERE carDev.device_sn = trip.device_sn ) AS lic_code,
+        sum( CASE WHEN DAY ( trip.create_time )= '1' THEN trip.mileage ELSE 0 END ) AS startMonthMileage,
+        sum( CASE DAY ( trip.create_time ) WHEN '30' THEN trip.mileage WHEN '31' THEN trip.mileage ELSE 0 END ) AS endMonthMileage,
+        sum( trip.mileage ) AS monthMileage,
+        sum( CASE WHEN DAY ( trip.create_time )= '1' THEN trip.fuel_consumption ELSE 0 END ) AS startFuelConsumption,
+        sum( CASE DAY ( trip.create_time ) WHEN '30' THEN trip.fuel_consumption WHEN '31' THEN trip.fuel_consumption ELSE 0 END ) AS endFuelConsumption,
+        sum( trip.fuel_consumption ) AS monthFuelConsumption,
+        sum( trip.fuel_consumption / 100 ) AS monthFuelOfKilometers
+        FROM
+        device_trip trip
+        LEFT JOIN device dev ON trip.device_sn = dev.device_sn
+        WHERE
+        MONTH(trip.create_time)=#{query.month}
+        <if test="query.year !=null and query.year!=''">
+            AND YEAR(trip.create_time)=#{query.year}
+        </if>
+        <if test="query.etpId !=null">
+            and dev.etp_id=#{query.etpId}
+        </if>
+        GROUP BY
+        trip.device_sn
+        <if test="query.licCode !=null and query.licCode!=''">
+            having lic_code like concat('%',#{query.licCode},'%')
+        </if>
+    </select>
+    <select id="getTripInfoByDeviceSn" resultType="com.htstar.ovms.device.api.vo.DeviceTripVO">
+        SELECT
+        car.lic_code,
+        trip.*,
+        round(TIMESTAMPDIFF( second, trip.sta_time, trip.end_time )/3600,1)AS timeLong
+        --         ,
+        --         (select sum(round(TIMESTAMPDIFF( second, sta_time,end_time )/3600,1) ) from device_trip)
+        --          as totaltimeLong
+        FROM
+        device_trip trip
+        left join car_device cd on trip.device_sn = cd.device_sn
+        left join car_info car on car.id = cd.car_id
+        <where>
+            car.del_flag = 0
+            <if test="query.deviceSn!=null and query.deviceSn!=''">
+                and trip.device_sn =#{query.deviceSn}
+            </if>
+            <if test="query.etpId !=null">
+                and car.etp_id=#{query.etpId}
+            </if>
+            <if test="query.licCode !=null and query.licCode!=''">
+                and car.lic_code like concat('%',#{query.licCode},'%')
+            </if>
+            <if test="query.startTime != null and query.startTime!=''">
+                and trip.sta_time >= #{query.startTime}
+            </if>
+            <if test="query.endTime != null and query.endTime!=''">
+                and <![CDATA[trip.end_time <= concat(#{query.endTime},' 23:59:59')]]>
+            </if>
+        </where>
+        order by trip.create_time desc
+    </select>
+
+</mapper>

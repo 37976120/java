@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.report.mapper.DrivingReportMapper">
+    <select id="getDvgIdList" resultType="java.lang.Integer">
+        SELECT
+          id
+        FROM
+          `car_info`
+        WHERE etp_id = #{etpId}
+          AND lic_code LIKE CONCAT('%',#{licCode},'%')
+          AND del_flag = 0
+    </select>
+
+    <select id="queryMonthDrivingCount" resultType="com.htstar.ovms.report.api.vo.TotalVO">
+        SELECT
+        MONTH(trip.sta_time) AS md,
+        SUM(trip.mileage / 1000) AS mileaGeTal,
+        SUM(round(TIMESTAMPDIFF( second, trip.sta_time, trip.end_time )/3600,1))AS timeLong,
+        SUM(fuel_consumption) AS consumPtionTal,
+        (SUM(fuel_consumption) / SUM(trip.mileage / 1000) ) * 100  AS hdredKm
+        FROM
+        device_trip trip
+        LEFT JOIN device dev ON trip.device_sn = dev.device_sn
+        LEFT JOIN car_device car ON car.device_sn = trip.device_sn
+        WHERE trip.`end_time` &lt;= #{endTime}
+        AND trip.`end_time` &gt;= #{staTime}
+        AND dev.etp_id = #{etpId}
+        <if test="dvgIdStar != null and dvgIdStar != ''">
+            AND car.car_id in ( ${dvgIdStar} )
+        </if>
+        GROUP BY MONTH(trip.`sta_time`)
+    </select>
+
+    <select id="queryVceMonthDrivingCount" resultType="com.htstar.ovms.report.api.vo.VceTotalVO">
+        SELECT
+        info.lic_code AS vce,
+        SUM(trip.mileage/1000) AS mileaGeTal,
+        SUM(round(TIMESTAMPDIFF( second, trip.sta_time, trip.end_time )/3600,1))AS timeLong,
+        SUM(fuel_consumption) AS consumPtionTal,
+        (SUM(fuel_consumption) / SUM(trip.mileage / 1000) ) * 100  AS hdredKm,
+        Max(trip.mileage/1000) AS omtNumber
+        FROM
+        device_trip trip
+        LEFT JOIN device dev ON trip.device_sn = dev.device_sn
+        LEFT JOIN car_device car ON car.device_sn = trip.device_sn
+        LEFT JOIN car_info info ON info.id = car.car_id
+        WHERE trip.`end_time` &lt;= #{endTime}
+        AND trip.`end_time` &gt;= #{staTime}
+        AND dev.etp_id = #{etpId}
+        <if test="deptId != null and deptId != ''">
+            AND info.dept_id in ( ${deptId} )
+        </if>
+        GROUP BY info.lic_code
+    </select>
+    <select id="queryDrivingMonthDrivingCount" resultType="com.htstar.ovms.report.api.vo.VceTotalVO">
+                SELECT
+        users.nick_name AS vce,
+        SUM(trip.mileage/1000) AS mileaGeTal,
+         SUM(round(TIMESTAMPDIFF( second, trip.sta_time, trip.end_time )/3600,1))AS timeLong,
+        SUM(fuel_consumption) AS consumPtionTal,
+        (SUM(fuel_consumption) / SUM(trip.mileage / 1000) ) * 100  AS hdredKm,
+        Max(trip.mileage/1000) AS omtNumber
+        FROM
+        device_trip trip
+        LEFT JOIN device dev ON trip.device_sn = dev.device_sn
+        LEFT JOIN car_device car ON car.device_sn = trip.device_sn
+        LEFT JOIN car_info info ON info.id = car.car_id
+				 inner JOIN car_driver_info driverinfo ON driverinfo.id = info.driver_id
+				 inner JOIN sys_user users ON users.user_id = driverinfo.user_id
+        WHERE trip.`end_time` &lt;= #{endTime}
+        AND trip.`end_time` &gt;= #{staTime}
+        AND dev.etp_id = #{etpId}
+        <if test="deptId != null and deptId != ''">
+            AND info.dept_id in ( ${deptId} )
+        </if>
+		GROUP BY  users.nick_name
+    </select>
+</mapper>

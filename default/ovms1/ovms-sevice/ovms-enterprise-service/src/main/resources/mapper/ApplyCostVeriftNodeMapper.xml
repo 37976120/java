@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.ApplyCostVerifyNodeMapper">
+
+  <resultMap id="applyCostVerifyNodeMap" type="com.htstar.ovms.enterprise.api.entity.ApplyCostVerifyNode">
+  <id property="id" column="id"/>
+  <result property="etpId" column="etp_id"/>
+  <result property="verifyType" column="verify_type"/>
+  <result property="verifyUserList" column="verify_user_list"/>
+  <result property="createUserId" column="create_user_id"/>
+  <result property="createTime" column="create_time"/>
+  </resultMap>
+  <sql id="clums">
+    id,
+    etp_id,
+    verify_type,
+    verify_user_list,
+    create_user_id,
+    create_time,
+  </sql>
+    <select id="getCostVerifyUsers" resultType="java.lang.String">
+        SELECT v.verify_user_list   FROM apply_cost_process_record p
+        LEFT JOIN apply_cost_verify_node  v ON p.node_id=v.id
+        WHERE p.cost_id=#{costId}  AND  cost_type=#{costType}
+    </select>
+    <select id="getVerifyUserVOList" resultType="com.htstar.ovms.enterprise.api.vo.VerifyUserVO">
+        SELECT
+        u.user_id,
+        u.nick_name,
+        u.username,
+        u.avatar
+        FROM sys_user u WHERE u.user_id IN (${verifyUserList})
+    </select>
+</mapper>

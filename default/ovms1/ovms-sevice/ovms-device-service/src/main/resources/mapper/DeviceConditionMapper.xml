@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.device.mapper.DeviceConditionMapper">
+
+  <resultMap id="deviceConditionMap" type="com.htstar.ovms.device.api.entity.DeviceCondition">
+                  <id property="deviceSn" column="device_sn"/>
+                        <result property="rcvTime" column="rcv_time"/>
+                        <result property="lastAcconTime" column="last_accon_time"/>
+                        <result property="deviceUtcTime" column="device_utc_time"/>
+                        <result property="conCount" column="con_count"/>
+                        <result property="conKey" column="con_key"/>
+                        <result property="conType" column="con_type"/>
+                        <result property="conValue" column="con_value"/>
+                        <result property="packIndex" column="pack_index"/>
+            </resultMap>
+</mapper>

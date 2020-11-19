@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.device.mapper.DeviceAlarmStatMapper">
+
+  <resultMap id="deviceAlarmStatMap" type="com.htstar.ovms.device.api.entity.DeviceAlarmStat">
+      <id property="id" column="id"/>
+    <result property="lastAcconTime" column="last_accon_time"/>
+    <result property="deviceTime" column="device_time"/>
+    <result property="totalTripMileage" column="total_trip_mileage"/>
+    <result property="currentTripMileage" column="current_trip_mileage"/>
+    <result property="totalFuel" column="total_fuel"/>
+    <result property="currentFuel" column="current_fuel"/>
+    <result property="vstate" column="vstate"/>
+    <result property="fireState" column="fire_state"/>
+  </resultMap>
+</mapper>

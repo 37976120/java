@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.ApplyOfficeCarProcessMapper">
+
+<resultMap id="applyCarProcessMap" type="com.htstar.ovms.enterprise.api.entity.ApplyCarProcess">
+    <id property="id" column="id"/>
+    <result property="etpId" column="etp_id"/>
+    <result property="verifyNodeList" column="verify_node_list"/>
+    <result property="processType" column="process_type"/>
+    <result property="createTime" column="create_time"/>
+    <result property="driverGetCarStatus" column="driver_get_car_status"/>
+    <result property="mileageStatus" column="mileage_status"/>
+</resultMap>
+    <sql id="clums">
+        id,etp_id,verify_node_list,create_time,process_type,driver_get_car_status,mileage_status
+    </sql>
+    <select id="getNowRunProcess"
+            resultType="com.htstar.ovms.enterprise.api.entity.ApplyCarProcess">
+        select <include refid="clums"></include>
+        from apply_car_process where etp_id = #{etpId} and  process_type = #{processType} order by id desc limit 1
+    </select>
+</mapper>

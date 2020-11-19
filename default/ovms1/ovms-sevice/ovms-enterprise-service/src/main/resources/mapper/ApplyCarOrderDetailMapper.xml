@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.ApplyOfficeCarEventDetailMapper">
+
+    <resultMap id="applyCarOrderDetailMap" type="com.htstar.ovms.enterprise.api.entity.ApplyCarOrderDetail">
+        <id property="orderId" column="order_id"/>
+        <result property="carNumber" column="car_number"/>
+        <result property="driveUserId" column="drive_user_id"/>
+        <result property="driveLicense" column="drive_license"/>
+        <result property="ccUserList" column="cc_user_list"/>
+        <result property="staAddr" column="sta_addr"/>
+        <result property="endAddrList" column="end_addr_list"/>
+        <result property="innerPassengerList" column="inner_passenger_list"/>
+        <result property="outPassengerList" column="out_passenger_list"/>
+        <result property="photoList" column="photo_list"/>
+        <result property="giveCarMileage" column="give_car_mileage"/>
+        <result property="giveCarKeepMileage" column="give_car_keep_mileage"/>
+        <result property="giveCarTime" column="give_car_time"/>
+        <result property="giveCarPhoto" column="give_car_photo"/>
+        <result property="giveCarRemark" column="give_car_remark"/>
+        <result property="retuenCarMileage" column="retuen_car_mileage"/>
+        <result property="retuenCarKeepMileage" column="retuen_car_keep_mileage"/>
+        <result property="retuenCarTime" column="retuen_car_time"/>
+        <result property="retuenCarPhoto" column="retuen_car_photo"/>
+        <result property="returnCarRemark" column="return_car_remark"/>
+        <result property="privateCarStopFee" column="private_car_stop_fee"/>
+        <result property="privateCarPassFee" column="private_car_pass_fee"/>
+        <result property="privateCarOilFee" column="private_car_oil_fee"/>
+        <result property="privateCarWashFee" column="private_car_wash_fee"/>
+        <result property="privateCarOtherFee" column="private_car_other_fee"/>
+        <result property="giveCarStatus" column="give_car_status"/>
+        <result property="retuenCarStatus" column="retuen_car_status"/>
+    </resultMap>
+
+</mapper>

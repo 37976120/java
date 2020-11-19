@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.EtpAdvertMapper">
+
+    <resultMap id="etpAdvertMap" type="com.htstar.ovms.enterprise.api.entity.EtpAdvert">
+        <id property="id" column="id"/>
+        <result property="etpId" column="etp_id"/>
+        <result property="sort" column="sort"/>
+        <result property="pictureAddr" column="picture_addr"/>
+        <result property="advertTitle" column="advert_title"/>
+        <result property="remark" column="remark"/>
+        <result property="clickCount" column="click_count"/>
+        <result property="noticeId" column="notice_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="putUserId" column="put_user_id"/>
+    </resultMap>
+    <sql id="clums">
+    id,
+    etp_id,
+    sort,
+    picture_addr,
+    advert_title,
+    remark,
+    click_count,
+    notice_id,
+    create_time,
+    del_flag,
+  </sql>
+    <!--删除广告-->
+    <update id="delEtpAdvert">
+       UPDATE etp_advert SET del_flag=1,click_count=IFNULL(#{clickCount},0)+click_count WHERE id=#{id}
+
+    </update>
+    <update id="updateClickCount">
+         UPDATE etp_advert SET click_count=#{click}+click_count WHERE id=#{id}
+    </update>
+    <select id="queryPage" resultType="com.htstar.ovms.enterprise.api.entity.EtpAdvert">
+        SELECT
+        a.*,
+        n.notice_title as noticeTitle,
+        e.etp_name as etpName
+        FROM
+        etp_advert a
+        LEFT JOIN etp_info e
+        ON a.etp_id = e.id
+        LEFT JOIN sys_user u
+        ON a.put_user_id = u.user_id
+        left join etp_notice n
+        on a.notice_id=n.`id`
+        where a.del_flag=0
+        <if test="req.etpId!=null">
+            and a.etp_id=#{req.etpId}
+        </if>
+        <if test="req.title!=null and req.title!=''">
+            and a.advert_title like  concat('%',#{req.title},'%')
+        </if>
+        order by sort asc
+    </select>
+    <select id="getEtpAdvertById" resultType="com.htstar.ovms.enterprise.api.entity.EtpAdvert">
+        SELECT a.*,
+        n.`notice_title` as noticeTitle
+        FROM etp_advert a
+        LEFT JOIN etp_notice n
+        ON a.notice_id=n.`id` WHERE a.id=#{id}
+    </select>
+    <select id="getList" resultType="java.lang.String">
+        SELECT id FROM etp_advert
+    </select>
+</mapper>

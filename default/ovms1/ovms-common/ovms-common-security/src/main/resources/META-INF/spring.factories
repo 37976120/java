@@ -1,0 +1,7 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.htstar.ovms.common.security.component.GlobalExceptionHandlerResolver,\
+  com.htstar.ovms.common.security.component.OvmsTokenEnhancer,\
+  com.htstar.ovms.common.security.component.OvmsSecurityInnerAspect,\
+  com.htstar.ovms.common.security.listener.AuthenticationFailureEventListener,\
+  com.htstar.ovms.common.security.listener.AuthenticationSuccessEventListener
+

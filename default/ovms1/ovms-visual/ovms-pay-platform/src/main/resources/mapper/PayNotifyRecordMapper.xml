@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.pay.mapper.PayNotifyRecordMapper">
+
+	<resultMap id="payNotifyRecordMap" type="com.htstar.ovms.pay.entity.PayNotifyRecord">
+		<id property="id" column="id"/>
+		<result property="notifyId" column="notify_id"/>
+		<result property="request" column="request"/>
+		<result property="response" column="response"/>
+		<result property="orderNo" column="order_no"/>
+		<result property="httpStatus" column="http_status"/>
+		<result property="delFlag" column="del_flag"/>
+		<result property="createTime" column="create_time"/>
+		<result property="updateTime" column="update_time"/>
+		<result property="etpId" column="etp_id"/>
+	</resultMap>
+</mapper>

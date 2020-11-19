@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.htstar</groupId>
+		<artifactId>ovms</artifactId>
+		<version>3.8.0</version>
+	</parent>
+
+	<artifactId>ovms-common</artifactId>
+	<packaging>pom</packaging>
+
+	<description>ovms 公共聚合模块</description>
+
+	<modules>
+		<module>ovms-common-bom</module>
+		<module>ovms-common-core</module>
+		<module>ovms-common-data</module>
+		<module>ovms-common-datasource</module>
+		<module>ovms-common-feign</module>
+		<module>ovms-common-gateway</module>
+		<module>ovms-common-gray</module>
+		<module>ovms-common-job</module>
+		<module>ovms-common-log</module>
+		<module>ovms-common-minio</module>
+		<module>ovms-common-security</module>
+		<module>ovms-common-sentinel</module>
+		<module>ovms-common-sequence</module>
+		<module>ovms-common-swagger</module>
+		<module>ovms-common-transaction</module>
+		<module>ovms-common-excel</module>
+	</modules>
+</project>

@@ -1,0 +1,160 @@
+# 使用说明 V3.8.0
+# 1. 使用docker-compose  宿主机不需要配置host来发现
+# 2. 无需修改源码，根目录  docker-compose up 即可
+# 3. 静静等待服务启动
+
+version: '2'
+services:
+  ovms-mysql:
+    build:
+      context: ./db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    restart: always
+    container_name: ovms-mysql
+    image: ovms-mysql
+    ports:
+      - 3306:3306
+    volumes:
+      - ./ovms-mysql:/var/lib/mysql
+    command: --lower_case_table_names=1
+
+  ovms-xxl:
+    container_name: ovms-xxl
+    image: xuxueli/xxl-job-admin:2.2.0
+    restart: always
+    environment:
+      PARAMS: "--server.port=9080 --spring.datasource.url=jdbc:mysql://ovms-mysql:3306/ovmsx_job?Unicode=true&characterEncoding=UTF-8 --spring.datasource.username=root --spring.datasource.password=root"
+    ports:
+      - 9080:9080
+
+  ovms-redis:
+    container_name: ovms-redis
+    image: redis:5.0.7
+    restart: always
+    ports:
+      - 6379:6379
+
+  ovms-minio:
+    container_name: ovms-minio
+    image: minio/minio
+    command: server /data
+    ports:
+      - 9000:9000
+    volumes:
+      - ./data:/data
+      - ./config:/root/.minio
+    environment:
+      - MINIO_DOMAIN=ovms-minio
+      - MINIO_ACCESS_KEY=ovms
+      - MINIO_SECRET_KEY=ovms
+
+  ovms-register:
+    build:
+      context: ./ovms-register
+    restart: always
+    container_name: ovms-register
+    image: ovms-register
+    ports:
+      - 8848:8848
+
+  ovms-api-gateway:
+    build:
+      context: ./ovms-api-gateway
+    restart: always
+    container_name: ovms-api-gateway
+    image: ovms-api-gateway
+    ports:
+      - 9999:9999
+
+  ovms-auth:
+    build:
+      context: ./ovms-auth
+    restart: always
+    container_name: ovms-auth
+    image: ovms-auth
+
+  ovms-platform-service:
+    build:
+      context: ./ovms-platform/ovms-platform-service
+    restart: always
+    container_name: ovms-platform-service
+    image: ovms-platform-service
+
+
+  ovms-enterprise-service:
+    build:
+      context: ./ovms-sevice/ovms-enterprise-service
+    restart: always
+    container_name: ovms-enterprise-service
+    image: ovms-enterprise-service
+
+  ovms-monitor:
+    build:
+      context: ./ovms-visual/ovms-monitor
+    restart: always
+    image: ovms-monitor
+    container_name: ovms-monitor
+    ports:
+      - 5001:5001
+
+  ovms-daemon-quartz:
+    build:
+      context: ./ovms-visual/ovms-daemon-quartz
+    restart: always
+    image: ovms-daemon-quartz
+    container_name: ovms-daemon-quartz
+
+  ovms-daemon-elastic-job:
+    build:
+      context: ./ovms-visual/ovms-daemon-elastic-job
+    restart: always
+    image: ovms-daemon-elastic-job
+    container_name: ovms-daemon-elastic-job
+
+  ovms-codegen:
+    build:
+      context: ./ovms-visual/ovms-codegen
+    restart: always
+    image: ovms-codegen
+    container_name: ovms-codegen
+
+  ovms-mp-platform:
+    build:
+      context: ./ovms-visual/ovms-mp-platform
+    restart: always
+    image: ovms-mp-platform
+    container_name: ovms-mp-platform
+
+  ovms-pay-platform:
+    build:
+      context: ./ovms-visual/ovms-pay-platform
+    restart: always
+    image: ovms-pay-platform
+    container_name: ovms-pay-platform
+
+  ovms-oa-platform:
+    build:
+      context: ./ovms-visual/ovms-oa-platform
+    restart: always
+    image: ovms-oa-platform
+    container_name: ovms-oa-platform
+
+  ovms-tx-manager:
+    build:
+      context: ./ovms-visual/ovms-tx-manager
+    restart: always
+    image: ovms-tx-manager
+    container_name: ovms-tx-manager
+    ports:
+      - 5004:5004
+      - 9998:9998
+
+  ovms-sentinel:
+    build:
+      context: ./ovms-visual/ovms-sentinel-dashboard
+    restart: always
+    image: ovms-sentinel
+    container_name: ovms-sentinel
+    ports:
+      - 5020:5020

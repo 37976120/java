@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.htstar.ovms.enterprise.mapper.CarRepairItemMapper">
+    <!--获取所有Id-->
+    <select id="getIdList" resultType="int">
+        SELECT id FROM car_repair_item WHERE del_flag=0 AND etp_id=#{etpId}
+    </select>
+    <!--导出excel-->
+    <select id="exportExcel" resultType="com.htstar.ovms.enterprise.api.vo.CarRepairItemPageVO">
+        SELECT
+        c.lic_code,
+        u.nick_name as username,
+        item.*
+        FROM
+        car_repair_item item
+        LEFT JOIN car_info c ON item.car_id=c.`id`
+        LEFT JOIN sys_user u ON u.user_id=item.`user_id`
+        where item.`del_flag`=0 AND item.etp_id = #{query.etpId}
+        and item.item_status!=0
+        <if test="query.ids!=null and query.ids!=''">
+            and item.id IN (${query.ids})
+        </if>
+        <if test="query.startTime != null">
+            AND item.rep_time &gt;=#{query.startTime}
+        </if>
+        <if test="query.endTime!= null">
+            AND item.rep_time &lt;=#{query.endTime}
+        </if>
+        <if test="query.licCode != null and query.licCode !=''">
+            AND c.lic_code like concat('%',#{query.licCode},'%')
+        </if>
+        <if test="query.itemStatus != null  ">
+            AND item.item_status = #{query.itemStatus}
+        </if>
+        order by item.create_time desc
+    </select>
+    <!--分页-->
+    <select id="queryPage" resultType="com.htstar.ovms.enterprise.api.vo.CarRepairItemPageVO">
+        SELECT
+        c.lic_code,
+        u.nick_name as username,
+        item.*
+        FROM
+        car_repair_item item
+        LEFT JOIN car_info c ON item.car_id  = c.`id`
+        LEFT JOIN sys_user u ON u.user_id = item.`user_id`
+
+        where  item.`del_flag`=0 and item.item_status!=0
+            <if test="query.startTime != null">
+                AND  item.rep_time &gt;=#{query.startTime}
+            </if>
+            <if test="query.endTime!= null">
+                AND item.rep_time &lt;=#{query.endTime}
+            </if>
+            <if test="query.licCode != null and query.licCode !=''">
+                AND c.lic_code like concat('%',#{query.licCode},'%')
+            </if>
+            <if test="query.itemStatus != null">
+                AND item.item_status = #{query.itemStatus}
+            </if>
+            <if test="query.etpId != null">
+                AND c.etp_id = #{query.etpId}
+            </if>
+            <if test="query.userId!=null">
+                AND  (item.user_id=#{query.userId}
+            </if>
+            <if test="query.licCodes !=null ">
+                or c.lic_code in
+                <foreach item="item" collection="query.licCodes" index="index" open="(" separator=","
+                         close=")">
+                    #{item}
+                </foreach>
+                )
+            </if>
+        order by item.create_time desc
+    </select>
+    <select id="getItemById" resultType="com.htstar.ovms.enterprise.api.vo.CarRepairItemPageVO">
+         SELECT
+          i.*,
+          c.`lic_code` as licCode,
+          u.nick_name as username
+        FROM
+          car_repair_item i
+          LEFT JOIN car_info c
+            ON i.`car_id` = c.`id`
+          left join sys_user u on i.user_id=u.user_id
+        WHERE i.`id` =#{id}
+    </select>
+    <select id="getItemByUser" resultType="com.htstar.ovms.enterprise.api.vo.CarRepairItemPageVO">
+         SELECT
+          i.*,
+          c.`lic_code` as licCode
+        FROM
+          car_repair_item i
+          LEFT JOIN car_info c
+            ON i.`car_id` = c.`id`
+        WHERE i.`user_id` =#{userId} and i.item_status=0
+    </select>
+
+
+    <!-- <resultMap id="carRepairItemMap" type="com.htstar.ovms.enterprise.api.entity.CarRepairItem">
+                   <id property="id" column="id"/>
+                         <result property="etpId" column="etp_id"/>
+                         <result property="carId" column="car_id"/>
+                         <result property="repairEtp" column="repair_etp"/>
+                         <result property="repMileage" column="rep_mileage"/>
+                         <result property="repTime" column="rep_time"/>
+                         <result property="repMoney" column="rep_money"/>
+                         <result property="repAdmin" column="rep_admin"/>
+                         <result property="createTime" column="create_time"/>
+                         <result property="updateTime" column="update_time"/>
+                         <result property="billAddr" column="bill_addr"/>
+                         <result property="remark" column="remark"/>
+                         <result property="delFlag" column="del_flag"/>
+             </resultMap>-->
+</mapper>
